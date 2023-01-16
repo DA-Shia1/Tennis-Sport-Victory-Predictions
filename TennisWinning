@@ -1,0 +1,2053 @@
+Project Name: Tennis Sport Victory Prediction
+This is a project I build as part of my final Big Data Infrastructure course with 3 of my colleagues. This project predicts the game results.
+
+Shiwani Yadav
+
+
+Tennis Sport Victory Prediction
+Data Source : Kaggle
+Importing the required packages
+Upload the csv, log, file to Databricks
+Reading the data file and performing basic Exploratory Data Analysis
+Checked the column Correlation and remove the highly correlated features as to reduce the complexity of the algorithm, thus decreasing the risk of errors.
+Targeting a subset of columns for classification
+Summarizing the data to get overall idea
+Data Cleaning by filtering out null values
+Data Visualization for data analysis
+Dividing the data into train and test ration of 60-40
+To streamline the data, establishing the pipeine, and stablising one with Logistic Regression
+We need a set of optimal hyperparameter values for the learning algorithm while applying this optimized algorithm to any data set, we are using Paramgrid and CrossValidator for Hyperparameter Tuning, comparing and selecting the right model for the dataset
+We need a measure of how well a machine learning model generalizes to similar data so that on which it was trained,to provide more accurate outcomes. So we fit the model with the training data
+Apply the Classification model on the test data to test the model
+Evaluating the model
+
+
+Objective
+The goal of this project is to analyze data from tennis tournaments in order to predict the results of games matches.
+
+Data Collection
+Dataset is taken from Kaggle https://www.kaggle.com/code/ahlemj/predict-atp-tennis/data
+
+%sh
+python --version
+
+Python 3.8.10
+
+Installing the required packages
+%sh 
+pip install kaggle
+pip install mlflow
+
+Collecting kaggle
+  Downloading kaggle-1.5.12.tar.gz (58 kB)
+Requirement already satisfied: six>=1.10 in /databricks/python3/lib/python3.8/site-packages (from kaggle) (1.15.0)
+Requirement already satisfied: certifi in /databricks/python3/lib/python3.8/site-packages (from kaggle) (2020.12.5)
+Requirement already satisfied: python-dateutil in /databricks/python3/lib/python3.8/site-packages (from kaggle) (2.8.1)
+Requirement already satisfied: requests in /databricks/python3/lib/python3.8/site-packages (from kaggle) (2.25.1)
+Collecting tqdm
+  Downloading tqdm-4.64.1-py2.py3-none-any.whl (78 kB)
+Collecting python-slugify
+  Downloading python_slugify-7.0.0-py2.py3-none-any.whl (9.4 kB)
+Requirement already satisfied: urllib3 in /databricks/python3/lib/python3.8/site-packages (from kaggle) (1.25.11)
+Collecting text-unidecode>=1.3
+  Downloading text_unidecode-1.3-py2.py3-none-any.whl (78 kB)
+Requirement already satisfied: idna<3,>=2.5 in /databricks/python3/lib/python3.8/site-packages (from requests->kaggle) (2.10)
+Requirement already satisfied: chardet<5,>=3.0.2 in /databricks/python3/lib/python3.8/site-packages (from requests->kaggle) (4.0.0)
+Building wheels for collected packages: kaggle
+  Building wheel for kaggle (setup.py): started
+  Building wheel for kaggle (setup.py): finished with status 'done'
+  Created wheel for kaggle: filename=kaggle-1.5.12-py3-none-any.whl size=73053 sha256=a35073347d7a9587f997df72db4100d26d006112e9198d08507799f83a98f87c
+  Stored in directory: /root/.cache/pip/wheels/29/da/11/144cc25aebdaeb4931b231e25fd34b394e6a5725cbb2f50106
+Successfully built kaggle
+Installing collected packages: text-unidecode, tqdm, python-slugify, kaggle
+Successfully installed kaggle-1.5.12 python-slugify-7.0.0 text-unidecode-1.3 tqdm-4.64.1
+WARNING: You are using pip version 21.0.1; however, version 22.3.1 is available.
+You should consider upgrading via the '/databricks/python3/bin/python -m pip install --upgrade pip' command.
+Collecting mlflow
+  Downloading mlflow-2.0.1-py3-none-any.whl (16.5 MB)
+Collecting cloudpickle<3
+  Downloading cloudpickle-2.2.0-py3-none-any.whl (25 kB)
+Collecting databricks-cli<1,>=0.8.7
+  Downloading databricks-cli-0.17.3.tar.gz (77 kB)
+Collecting click<9,>=7.0
+  Downloading click-8.1.3-py3-none-any.whl (96 kB)
+Requirement already satisfied: pytz<2023 in /databricks/python3/lib/python3.8/site-packages (from mlflow) (2020.5)
+Collecting sqlparse<1,>=0.4.0
+  Downloading sqlparse-0.4.3-py3-none-any.whl (42 kB)
+Requirement already satisfied: entrypoints<1 in /databricks/python3/lib/python3.8/site-packages (from mlflow) (0.3)
+Requirement already satisfied: requests<3,>=2.17.3 in /databricks/python3/lib/python3.8/site-packages (from mlflow) (2.25.1)
+Requirement already satisfied: numpy<2 in /databricks/python3/lib/python3.8/site-packages (from mlflow) (1.20.1)
+Requirement already satisfied: pyarrow<11,>=4.0.0 in /databricks/python3/lib/python3.8/site-packages (from mlflow) (4.0.0)
+Requirement already satisfied: pandas<2 in /databricks/python3/lib/python3.8/site-packages (from mlflow) (1.2.4)
+Collecting docker<7,>=4.0.0
+  Downloading docker-6.0.1-py3-none-any.whl (147 kB)
+Requirement already satisfied: scikit-learn<2 in /databricks/python3/lib/python3.8/site-packages (from mlflow) (0.24.1)
+Collecting markdown<4,>=3.3
+  Downloading Markdown-3.4.1-py3-none-any.whl (93 kB)
+Requirement already satisfied: Jinja2<4,>=2.11 in /databricks/python3/lib/python3.8/site-packages (from mlflow) (2.11.3)
+Collecting importlib-metadata!=4.7.0,<6,>=3.7.0
+  Downloading importlib_metadata-5.1.0-py3-none-any.whl (21 kB)
+Requirement already satisfied: protobuf<5,>=3.12.0 in /databricks/python3/lib/python3.8/site-packages (from mlflow) (3.17.2)
+Collecting pyyaml<7,>=5.1
+  Downloading PyYAML-6.0-cp38-cp38-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_12_x86_64.manylinux2010_x86_64.whl (701 kB)
+Collecting shap<1,>=0.40
+  Downloading shap-0.41.0-cp38-cp38-manylinux_2_12_x86_64.manylinux2010_x86_64.whl (575 kB)
+Collecting alembic<2
+  Downloading alembic-1.8.1-py3-none-any.whl (209 kB)
+Collecting gitpython<4,>=2.1.0
+  Downloading GitPython-3.1.29-py3-none-any.whl (182 kB)
+Requirement already satisfied: scipy<2 in /databricks/python3/lib/python3.8/site-packages (from mlflow) (1.6.2)
+Requirement already satisfied: matplotlib<4 in /databricks/python3/lib/python3.8/site-packages (from mlflow) (3.4.2)
+Collecting sqlalchemy<2,>=1.4.0
+  Downloading SQLAlchemy-1.4.44-cp38-cp38-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl (1.6 MB)
+Collecting gunicorn<21
+  Downloading gunicorn-20.1.0-py3-none-any.whl (79 kB)
+Requirement already satisfied: packaging<22 in /databricks/python3/lib/python3.8/site-packages (from mlflow) (20.9)
+Collecting Flask<3
+  Downloading Flask-2.2.2-py3-none-any.whl (101 kB)
+Collecting querystring-parser<2
+  Downloading querystring_parser-1.2.4-py2.py3-none-any.whl (7.9 kB)
+Collecting importlib-resources
+  Downloading importlib_resources-5.10.0-py3-none-any.whl (34 kB)
+Collecting Mako
+  Downloading Mako-1.2.4-py3-none-any.whl (78 kB)
+Collecting pyjwt>=1.7.0
+  Downloading PyJWT-2.6.0-py3-none-any.whl (20 kB)
+Collecting oauthlib>=3.1.0
+  Downloading oauthlib-3.2.2-py3-none-any.whl (151 kB)
+Collecting tabulate>=0.7.7
+  Downloading tabulate-0.9.0-py3-none-any.whl (35 kB)
+Requirement already satisfied: six>=1.10.0 in /databricks/python3/lib/python3.8/site-packages (from databricks-cli<1,>=0.8.7->mlflow) (1.15.0)
+Collecting websocket-client>=0.32.0
+  Downloading websocket_client-1.4.2-py3-none-any.whl (55 kB)
+Collecting urllib3>=1.26.0
+  Downloading urllib3-1.26.13-py2.py3-none-any.whl (140 kB)
+Collecting requests<3,>=2.17.3
+  Downloading requests-2.28.1-py3-none-any.whl (62 kB)
+Collecting itsdangerous>=2.0
+  Downloading itsdangerous-2.1.2-py3-none-any.whl (15 kB)
+Collecting Jinja2<4,>=2.11
+  Downloading Jinja2-3.1.2-py3-none-any.whl (133 kB)
+Collecting Werkzeug>=2.2.2
+  Downloading Werkzeug-2.2.2-py3-none-any.whl (232 kB)
+Collecting gitdb<5,>=4.0.1
+  Downloading gitdb-4.0.10-py3-none-any.whl (62 kB)
+Collecting smmap<6,>=3.0.1
+  Downloading smmap-5.0.0-py3-none-any.whl (24 kB)
+Requirement already satisfied: setuptools>=3.0 in /usr/local/lib/python3.8/dist-packages (from gunicorn<21->mlflow) (52.0.0)
+Collecting zipp>=0.5
+  Downloading zipp-3.11.0-py3-none-any.whl (6.6 kB)
+Requirement already satisfied: MarkupSafe>=2.0 in /databricks/python3/lib/python3.8/site-packages (from Jinja2<4,>=2.11->mlflow) (2.0.1)
+Requirement already satisfied: python-dateutil>=2.7 in /databricks/python3/lib/python3.8/site-packages (from matplotlib<4->mlflow) (2.8.1)
+Requirement already satisfied: pillow>=6.2.0 in /databricks/python3/lib/python3.8/site-packages (from matplotlib<4->mlflow) (8.2.0)
+Requirement already satisfied: cycler>=0.10 in /databricks/python3/lib/python3.8/site-packages (from matplotlib<4->mlflow) (0.10.0)
+Requirement already satisfied: kiwisolver>=1.0.1 in /databricks/python3/lib/python3.8/site-packages (from matplotlib<4->mlflow) (1.3.1)
+Requirement already satisfied: pyparsing>=2.2.1 in /databricks/python3/lib/python3.8/site-packages (from matplotlib<4->mlflow) (2.4.7)
+Requirement already satisfied: certifi>=2017.4.17 in /databricks/python3/lib/python3.8/site-packages (from requests<3,>=2.17.3->mlflow) (2020.12.5)
+Collecting charset-normalizer<3,>=2
+  Downloading charset_normalizer-2.1.1-py3-none-any.whl (39 kB)
+Requirement already satisfied: idna<4,>=2.5 in /databricks/python3/lib/python3.8/site-packages (from requests<3,>=2.17.3->mlflow) (2.10)
+Requirement already satisfied: joblib>=0.11 in /databricks/python3/lib/python3.8/site-packages (from scikit-learn<2->mlflow) (1.0.1)
+Requirement already satisfied: threadpoolctl>=2.0.0 in /databricks/python3/lib/python3.8/site-packages (from scikit-learn<2->mlflow) (2.1.0)
+Collecting numba
+  Downloading numba-0.56.4-cp38-cp38-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (3.5 MB)
+Requirement already satisfied: tqdm>4.25.0 in /databricks/python3/lib/python3.8/site-packages (from shap<1,>=0.40->mlflow) (4.64.1)
+Collecting slicer==0.0.7
+  Downloading slicer-0.0.7-py3-none-any.whl (14 kB)
+Collecting packaging<22
+  Downloading packaging-21.3-py3-none-any.whl (40 kB)
+Collecting greenlet!=0.4.17
+  Downloading greenlet-2.0.1-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (544 kB)
+Collecting MarkupSafe>=2.0
+  Downloading MarkupSafe-2.1.1-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (25 kB)
+Collecting llvmlite<0.40,>=0.39.0dev0
+  Downloading llvmlite-0.39.1-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (34.6 MB)
+Building wheels for collected packages: databricks-cli
+  Building wheel for databricks-cli (setup.py): started
+  Building wheel for databricks-cli (setup.py): finished with status 'done'
+  Created wheel for databricks-cli: filename=databricks_cli-0.17.3-py3-none-any.whl size=139099 sha256=e0544e4b1fe74f3a9b7a93133bb20219d3e5ef01acb337bf27c86fcb8de70e06
+  Stored in directory: /root/.cache/pip/wheels/58/40/7c/d021d51dac18bfd095fb6837572ad2e6f1a34d221f4b1d976b
+Successfully built databricks-cli
+Installing collected packages: zipp, urllib3, smmap, MarkupSafe, llvmlite, importlib-metadata, greenlet, charset-normalizer, Werkzeug, websocket-client, tabulate, sqlalchemy, slicer, requests, pyjwt, packaging, oauthlib, numba, Mako, Jinja2, itsdangerous, importlib-resources, gitdb, cloudpickle, click, sqlparse, shap, querystring-parser, pyyaml, markdown, gunicorn, gitpython, Flask, docker, databricks-cli, alembic, mlflow
+  Attempting uninstall: urllib3
+    Found existing installation: urllib3 1.25.11
+    Uninstalling urllib3-1.25.11:
+      Successfully uninstalled urllib3-1.25.11
+  Attempting uninstall: MarkupSafe
+    Found existing installation: MarkupSafe 2.0.1
+    Uninstalling MarkupSafe-2.0.1:
+      Successfully uninstalled MarkupSafe-2.0.1
+  Attempting uninstall: requests
+    Found existing installation: requests 2.25.1
+    Uninstalling requests-2.25.1:
+      Successfully uninstalled requests-2.25.1
+  Attempting uninstall: packaging
+    Found existing installation: packaging 20.9
+    Uninstalling packaging-20.9:
+      Successfully uninstalled packaging-20.9
+  Attempting uninstall: Jinja2
+    Found existing installation: Jinja2 2.11.3
+    Uninstalling Jinja2-2.11.3:
+      Successfully uninstalled Jinja2-2.11.3
+ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+botocore 1.19.7 requires urllib3<1.26,>=1.25.4; python_version != "3.4", but you have urllib3 1.26.13 which is incompatible.
+Successfully installed Flask-2.2.2 Jinja2-3.1.2 Mako-1.2.4 MarkupSafe-2.1.1 Werkzeug-2.2.2 alembic-1.8.1 charset-normalizer-2.1.1 click-8.1.3 cloudpickle-2.2.0 databricks-cli-0.17.3 docker-6.0.1 gitdb-4.0.10 gitpython-3.1.29 greenlet-2.0.1 gunicorn-20.1.0 importlib-metadata-5.1.0 importlib-resources-5.10.0 itsdangerous-2.1.2 llvmlite-0.39.1 markdown-3.4.1 mlflow-2.0.1 numba-0.56.4 oauthlib-3.2.2 packaging-21.3 pyjwt-2.6.0 pyyaml-6.0 querystring-parser-1.2.4 requests-2.28.1 shap-0.41.0 slicer-0.0.7 smmap-5.0.0 sqlalchemy-1.4.44 sqlparse-0.4.3 tabulate-0.9.0 urllib3-1.26.13 websocket-client-1.4.2 zipp-3.11.0
+WARNING: You are using pip version 21.0.1; however, version 22.3.1 is available.
+You should consider upgrading via the '/databricks/python3/bin/python -m pip install --upgrade pip' command.
+
+
+#Importing the required packages
+
+import pyspark
+import pandas as pd
+from pyspark.sql.functions import col, desc, udf, sum as Fsum, from_unixtime, \
+    count, countDistinct, when, isnull, max as Fmax, min as Fmin, length, \
+    month, datediff, first, year, concat
+from pyspark.sql.types import IntegerType, FloatType, DateType, TimestampType, LongType, StringType
+from pyspark.ml.feature import StringIndexer, VectorAssembler, OneHotEncoder
+from pyspark.ml import Pipeline
+from pyspark.ml.classification import GBTClassifier, RandomForestClassifier, LogisticRegression
+from pyspark.ml.evaluation import  MulticlassClassificationEvaluator, BinaryClassificationEvaluator
+from pyspark.ml.tuning import ParamGridBuilder, CrossValidator
+
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+import time
+
+%sh
+rm  /databricks/driver/*.csv
+rm  /databricks/driver/*.zip
+
+rm: cannot remove '/databricks/driver/*.csv': No such file or directory
+rm: cannot remove '/databricks/driver/*.zip': No such file or directory
+
+Dataset is taken from Kaggle
+%sh
+export KAGGLE_USERNAME=satwinderkaur19
+export KAGGLE_KEY=8c357e22eb686b94836b7b9e8ea51f51
+kaggle datasets download -d SY/atptennisdataset
+unzip atptennisdataset.zip
+
+Downloading atptennisdataset.zip to /databricks/driver
+
+  0%|          | 0.00/6.78M [00:00<?, ?B/s]
+ 74%|███████▎  | 5.00M/6.78M [00:00<00:00, 30.7MB/s]
+100%|██████████| 6.78M/6.78M [00:00<00:00, 37.4MB/s]
+
+Archive:  atptennisdataset.zip
+  inflating: ATP.csv                 
+
+
+%sh
+ls  "/databricks/driver/"
+ATP.csv
+atptennisdataset.zip
+azure
+conf
+derby.log
+eventlogs
+ganglia
+hadoop_accessed_config.lst
+logs
+metastore_db
+preload_class.lst
+
+
+#Reading data
+df = spark.read.csv("file:///databricks/driver/ATP.csv", header="true", inferSchema="true")
+
+# Displaying 10 rows
+display(df.limit(10))
+
+Atable with 10 entry will be printed
+
+EDA to get the insights of data and variables
+df.printSchema()
+root
+ |-- best_of: integer (nullable = true)
+ |-- draw_size: double (nullable = true)
+ |-- l_1stIn: double (nullable = true)
+ |-- l_1stWon: double (nullable = true)
+ |-- l_2ndWon: double (nullable = true)
+ |-- l_SvGms: double (nullable = true)
+ |-- l_ace: double (nullable = true)
+ |-- l_bpFaced: double (nullable = true)
+ |-- l_bpSaved: double (nullable = true)
+ |-- l_df: double (nullable = true)
+ |-- l_svpt: double (nullable = true)
+ |-- loser_age: double (nullable = true)
+ |-- loser_entry: string (nullable = true)
+ |-- loser_hand: string (nullable = true)
+ |-- loser_ht: double (nullable = true)
+ |-- loser_id: integer (nullable = true)
+ |-- loser_ioc: string (nullable = true)
+ |-- loser_name: string (nullable = true)
+ |-- loser_rank: double (nullable = true)
+ |-- loser_rank_points: double (nullable = true)
+ |-- loser_seed: double (nullable = true)
+ |-- match_num: integer (nullable = true)
+ |-- minutes: double (nullable = true)
+ |-- round: string (nullable = true)
+ |-- score: string (nullable = true)
+ |-- surface: string (nullable = true)
+ |-- tourney_date: integer (nullable = true)
+ |-- tourney_id: string (nullable = true)
+ |-- tourney_level: string (nullable = true)
+ |-- tourney_name: string (nullable = true)
+ |-- w_1stIn: double (nullable = true)
+ |-- w_1stWon: double (nullable = true)
+ |-- w_2ndWon: double (nullable = true)
+ |-- w_SvGms: double (nullable = true)
+ |-- w_ace: double (nullable = true)
+ |-- w_bpFaced: double (nullable = true)
+ |-- w_bpSaved: double (nullable = true)
+ |-- w_df: double (nullable = true)
+ |-- w_svpt: double (nullable = true)
+ |-- winner_age: double (nullable = true)
+ |-- winner_entry: string (nullable = true)
+ |-- winner_hand: string (nullable = true)
+ |-- winner_ht: double (nullable = true)
+ |-- winner_id: integer (nullable = true)
+ |-- winner_ioc: string (nullable = true)
+ |-- winner_name: string (nullable = true)
+ |-- winner_rank: double (nullable = true)
+ |-- winner_rank_points: double (nullable = true)
+ |-- winner_seed: double (nullable = true)
+
+Dataset Explanation:
+We don't have categorical variable in our data so for our supervised prediction model we will define our target feature.
+
+To make our data better organized, improve data quality we will transform our data to end up with the following
+
+2 players - first player & second player
+Their personal informations such as id, hand, age, etc
+General informations about the match and the tournament.
+Followed by it, we will be creating a column "label" which will be
+
+1 if player 1 wins
+0 if player 1 loses
+We will progress on by duplicating the dataset out of which first copy of dataset is we will consider as original and second copy of the dataset will be the inverse of the player positions, so we label 0 and 1 for the match
+
+Target Variable label
+
+1 - player 1 wins
+0 - player 1 loses
+Predictor Fields:
+
+winner_id - Winning player id
+loser_id - Losing player id
+winner_ioc - Winning player ioc
+loser_ioc - Losing player ioc
+winner_rank - Winning player Rank
+loser_rank - Losing player rank
+winner_rank_points - Winning player rank points
+loser_rank_points - Losing player rank points
+winner_age - Winning player age
+loser_age - Losing player age
+winner_hand - Winning player hand
+loser_hand - Losing player hand
+winner_ht - Winning player height
+loser_ht - Losing player height
+Data Visualization
+Bar Graph - Plot shows the players who did not perform so well in the tournament
+import matplotlib.pyplot as plt   
+import seaborn as sns
+
+df_victory = df.groupby('loser_name').agg({'loser_name' : 'count'})\
+                    .withColumnRenamed("count(loser_name)", "count").orderBy("count", ascending=False)
+df1 = df_victory.limit(10).toPandas()
+fig, ax = plt.subplots()
+fig.set_size_inches(9, 5)
+sns.set(style="ticks", font_scale=1)
+ax = sns.barplot(data=df1, y='loser_name', x='count')
+
+A Bar graph will be printed with the players who did not perform so well in the tournament
+
+Bar Graph - Plot shows the players who performed well in the tournament
+import matplotlib.pyplot as plt   
+import seaborn as sns
+
+df_victory = df.groupby('winner_name').agg({'winner_name' : 'count'})\
+                    .withColumnRenamed("count(winner_name)", "count").orderBy("count", ascending=False)
+df1 = df_victory.limit(10).toPandas()
+fig, ax = plt.subplots()
+fig.set_size_inches(9, 5)
+sns.set(style="dark", font_scale=1)
+ax = sns.barplot(data=df1, y='winner_name', x='count')
+
+A Bar graph will be printed with the players who performed well in the tournament
+
+
+Feature Selection - Checking and Removing highly correlated features
+df_new = df.toPandas()
+corrM = df_new.corr()
+plt.figure(figsize=(25,25))
+
+sns.heatmap(corrM, annot=True, linewidth=0.2, cmap='Purples')
+
+A Correlation matrix is printed showing the interrelatability of the attributes
+
+Data Cleaning and Data Transformation
+Here, we are cleaning the data by removing all the redundant columns and unnecessary values that will not be affecting our predictions
+
+from pyspark.sql.functions import col,isnan, when, count
+df1=df.select('best_of', 'draw_size','loser_age', 'loser_entry', 'loser_hand',
+       'loser_ht', 'loser_id', 'loser_ioc', 'loser_rank', 'loser_rank_points',
+       'loser_seed', 'match_num', 'round', 'surface', 'tourney_date',
+       'tourney_id', 'tourney_level', 'winner_age', 'winner_entry',
+       'winner_hand', 'winner_ht', 'winner_id', 'winner_ioc', 'winner_rank',
+       'winner_rank_points', 'winner_seed')
+df1
+display(df1)
+
+A Table is printed 
+
+
+df2=df1.select('best_of', 'loser_age', 'loser_hand', 
+       'loser_ht', 'loser_id', 'loser_ioc', 'loser_rank', 'loser_rank_points', 'match_num', 'round', 'surface', 'tourney_date',
+       'tourney_id', 'tourney_level', 'winner_age', 'winner_hand', 'winner_ht', 'winner_id', 'winner_ioc', 'winner_rank', 'winner_rank_points')
+display(df2)
+
+A Table is printed 
+
+
+df2.select([count(when(isnan(c) | col(c).isNull(), c)).alias(c) for c in df2.columns]).show()
+df3=df2.dropna()
+display(df3)
++-------+---------+----------+--------+--------+---------+----------+-----------------+---------+-----+-------+------------+----------+-------------+----------+-----------+---------+---------+----------+-----------+------------------+
+|best_of|loser_age|loser_hand|loser_ht|loser_id|loser_ioc|loser_rank|loser_rank_points|match_num|round|surface|tourney_date|tourney_id|tourney_level|winner_age|winner_hand|winner_ht|winner_id|winner_ioc|winner_rank|winner_rank_points|
++-------+---------+----------+--------+--------+---------+----------+-----------------+---------+-----+-------+------------+----------+-------------+----------+-----------+---------+---------+----------+-----------+------------------+
+|      0|     4990|        85|   30638|       0|        0|     23781|            76665|        0|    0|   2539|           0|         0|            0|      1761|         39|    18806|        0|         0|      19917|             75399|
++-------+---------+----------+--------+--------+---------+----------+-----------------+---------+-----+-------+------------+----------+-------------+----------+-----------+---------+---------+----------+-----------+------------------+
+
+
+A Table is printed 
+
+
+#Converting string to float data type to prevent errors
+
+from pyspark.sql.functions import regexp_extract,col
+
+df3 = df3.withColumn('winner_rank', df3['winner_rank'].cast('float'))
+df3 = df3.withColumn('loser_rank', df3['loser_rank'].cast('float'))
+df3 = df3.withColumn('winner_age', df3['winner_age'].cast('float'))
+df3 = df3.withColumn('loser_age', df3['loser_age'].cast('float'))
+df3 = df3.withColumn('winner_ht', df3['winner_ht'].cast('float'))
+df3 = df3.withColumn('loser_ht', df3['loser_ht'].cast('float'))
+
+
+display(df3)
+
+
+Displaying dataframe
+
+
+#Separating out the date and month coloumns to give better clarity over data
+
+df4 = df3.withColumn('tourney_year',df3.tourney_date.substr(1,4))
+
+df4 = df4.withColumn('tourney_month',df4.tourney_date.substr(5,2))
+
+df4 = df4.drop(df4.tourney_date)
+display(df4)
+
+Displaying dataframe
+
+
+
+Feature engineering
+As we don't have categorical variable in our data so for our supervised prediction model we will define our target feature.
+
+To make our data better organized, improve data quality we will transform our data to end up with the following
+
+2 players - first player & second player
+Their personal informations such as id, hand, age, etc
+General informations about the match and the tournament.
+Followed by it, we will be creating a column "label" which will be
+
+1 if player 1 wins
+0 if player 1 loses
+We will progress on by duplicating the dataset out of which first copy of dataset is we will consider as original and second copy of the dataset will be the inverse of the player positions, so we label 0 and 1 for the match
+
+df5 = df4.select(col("loser_age").alias("first_age"), \
+
+  col("loser_hand").alias("first_hand"), \
+  col("loser_ht").alias("first_ht"), \
+  col("loser_id").alias("first_id"), \
+  col("loser_ioc").alias("first_ioc"), \
+  col("loser_rank").alias("first_rank"), \
+  col("loser_rank_points").alias("first_rank_points"), \
+  col("winner_age").alias("second_age"), \
+  col("winner_hand").alias("second_hand"), \
+  col("winner_ht").alias("second_ht"), \
+  col("winner_id").alias("second_id"), \
+  col("winner_ioc").alias("second_ioc"), \
+  col("winner_rank").alias("second_rank"), \
+  col("winner_rank_points").alias("second_rank_points"))
+
+display(df5)
+Displaying dataframe
+
+df5_2 = df5.select("*")
+
+df6 = df5_2.select(col("first_age").alias("second_age"), \
+  col("first_hand").alias("second_hand"), \
+  col("first_ht").alias("second_ht"), \
+  col("first_id").alias("second_id"), \
+  col("first_ioc").alias("second_ioc"), \
+  col("first_rank").alias("second_rank"), \
+  col("first_rank_points").alias("second_rank_points"), \
+  col("second_age").alias("first_age"), \
+  col("second_hand").alias("first_hand"), \
+  col("second_ht").alias("first_ht"), \
+  col("second_id").alias("first_id"), \
+  col("second_ioc").alias("first_ioc"), \
+  col("second_rank").alias("first_rank"), \
+  col("second_rank_points").alias("first_rank_points"))
+ 
+display(df6)
+
+Displaying dataframe
+
+Creating feature - label
+
+df7=df5.toPandas()
+df8=df6.toPandas()
+
+import numpy as np
+victory_player1 = np.zeros(df7.shape[0]) 
+df7['label'] = victory_player1
+victory_player2 = np.ones(df8.shape[0]) 
+df8['label'] = victory_player2 
+display(df7)
+len(df7)
+Displaying dataframe
+
+display(df8)
+
+Displaying dataframe
+
+# Concatenating two dataframes
+
+import pandas as pd
+
+df = pd.concat([df7,df8])
+display(df)
+
+Displaying dataframe
+
+
+#shuffling the data to randonly distribute data
+
+df = df.sample(frac=1).reset_index(drop=True)
+df
+
+-----------------------------------------------------------------------------------------------------------------
+# Creating spark dataframe
+
+df = spark.createDataFrame(df)
+type(df)
+df.printSchema()
+root
+ |-- first_age: float (nullable = true)
+ |-- first_hand: string (nullable = true)
+ |-- first_ht: float (nullable = true)
+ |-- first_id: integer (nullable = true)
+ |-- first_ioc: string (nullable = true)
+ |-- first_rank: float (nullable = true)
+ |-- first_rank_points: double (nullable = true)
+ |-- second_age: float (nullable = true)
+ |-- second_hand: string (nullable = true)
+ |-- second_ht: float (nullable = true)
+ |-- second_id: integer (nullable = true)
+ |-- second_ioc: string (nullable = true)
+ |-- second_rank: float (nullable = true)
+ |-- second_rank_points: double (nullable = true)
+ |-- label: double (nullable = true)
+
+Command took 0.36 seconds -- by a user at 1/12/2022, 1:14:55 pm on unknown cluster
+# Splitting the data into Train and Test
+
+train_data,test_data  = df.randomSplit([0.6, 0.4], 24)   # proportions [], seed for random
+
+print("records in training data : " + str(train_data.count()))
+print("records in testing data : " + str(test_data.count()))
+records in training data : 100851
+records in testing data : 66967
+Command took 3.90 seconds -- by a user at 1/12/2022, 1:14:55 pm on unknown cluster
+Modeling & Tuning
+Deploying Random Forest, GBT Classifier and SVM models in pipeline Using Paramgrid and CrossValidation for data modeling and tuning
+
+from pyspark.ml.feature import VectorAssembler,RFormula
+from pyspark.ml.feature import StringIndexer, IndexToString, VectorAssembler
+from pyspark.ml.classification import GBTClassifier
+from pyspark.ml.evaluation import MulticlassClassificationEvaluator
+from pyspark.ml import Pipeline, Model
+from pyspark.ml.classification import LinearSVC
+from pyspark.ml.classification import GBTClassifier, RandomForestClassifier, LogisticRegression
+from pyspark.ml.tuning import ParamGridBuilder, CrossValidator
+
+
+columns = df.columns
+# Not using label column in features
+columns.remove('label')
+columns.remove('first_hand')
+columns.remove('first_ioc')
+columns.remove('second_hand')
+columns.remove('second_ioc')
+
+# with RFormula (whih will create a feature column)
+formula = "{} ~ {}".format("label", " + ".join(columns))
+print("Formula : {}".format(formula))
+rformula = RFormula(formula = formula)
+
+pipeline = Pipeline(stages=[])  
+
+basePipeline =[rformula]
+
+#############################################################
+# Specify GBT Classifier model
+xgboost = GBTClassifier(labelCol ="label", featuresCol ="features")
+pl_xgboost = basePipeline + [xgboost]
+pg_xgboost = ParamGridBuilder()\
+          .addGrid(xgboost.maxDepth, [2, 5, 10])\
+          .baseOn({pipeline.stages: pl_xgboost})\
+          .build()
+
+#############################################################
+# Specify Random Forrest model
+rf = RandomForestClassifier(labelCol ="label", featuresCol ="features")
+pl_rf = basePipeline + [rf]
+pg_rf = ParamGridBuilder()\
+      .baseOn({pipeline.stages: pl_rf})\
+      .addGrid(rf.maxDepth,[3,4])\
+      .build()
+
+#############################################################
+# Specify SVM model
+lsvc = LinearSVC(labelCol ="label", featuresCol ="features", maxIter=10, regParam=0.1)
+pl_lsvc = basePipeline + [rf]
+pg_lsvc = ParamGridBuilder()\
+      .baseOn({pipeline.stages: pl_lsvc})\
+      .build()
+
+# One grid from the individual grids
+paramGrid = pg_xgboost + pg_rf + pg_lsvc
+Formula : label ~ first_age + first_ht + first_id + first_rank + first_rank_points + second_age + second_ht + second_id + second_rank + second_rank_points
+Command took 0.54 seconds -- by a user at 1/12/2022, 1:14:55 pm on unknown cluster
+Fitting the Model
+from pyspark.ml.evaluation import  MulticlassClassificationEvaluator, BinaryClassificationEvaluator
+
+evaluator=BinaryClassificationEvaluator(rawPredictionCol="rawPrediction",labelCol="label")
+
+cv = CrossValidator()\
+      .setEstimator(pipeline)\
+      .setEvaluator(evaluator)\
+      .setEstimatorParamMaps(paramGrid)\
+      .setNumFolds(2)
+
+cvModel = cv.fit(train_data.limit(100))
+Command took 2.07 minutes -- by a user at 1/12/2022, 1:14:55 pm on unknown cluster
+Displaying the Best Model and its parameters
+bestmodel = cvModel.bestModel
+Command took 0.05 seconds -- by a user at 1/12/2022, 1:14:55 pm on unknown cluster
+Best and Worst Model
+import numpy as np
+# RegressionEvaluator metric name is r2, so higher is better
+# http://gim.unmc.edu/dxtests/roc3.htm
+print("Best Model")
+print(cvModel.getEstimatorParamMaps()[ np.argmax(cvModel.avgMetrics) ])
+print("Worst Model")
+print (cvModel.getEstimatorParamMaps()[ np.argmin(cvModel.avgMetrics) ])
+Best Model
+{Param(parent='Pipeline_bfff42c7e38a', name='stages', doc='a list of pipeline stages'): [RFormula_38c99cba9ddd, RandomForestClassifier_50afffe66a03], Param(parent='RandomForestClassifier_50afffe66a03', name='maxDepth', doc='Maximum depth of the tree. (>= 0) E.g., depth 0 means 1 leaf node; depth 1 means 1 internal node + 2 leaf nodes. Must be in range [0, 30].'): 4}
+Worst Model
+{Param(parent='GBTClassifier_46e17f5b69e6', name='maxDepth', doc='Maximum depth of the tree. (>= 0) E.g., depth 0 means 1 leaf node; depth 1 means 1 internal node + 2 leaf nodes. Must be in range [0, 30].'): 5, Param(parent='Pipeline_bfff42c7e38a', name='stages', doc='a list of pipeline stages'): [RFormula_38c99cba9ddd, GBTClassifier_46e17f5b69e6]}
+Command took 0.04 seconds -- by a user at 1/12/2022, 1:14:55 pm on unknown cluster
+Model Measures
+import re
+def paramGrid_model_name(model):
+  params = [v for v in model.values() if type(v) is not list]
+  name = [v[-1] for v in model.values() if type(v) is list][0]
+  name = re.match(r'([a-zA-Z]*)', str(name)).groups()[0]
+  return "{}{}".format(name,params)
+
+measures = zip(cvModel.avgMetrics, [paramGrid_model_name(m) for m in paramGrid])
+metrics,model_names = zip(*measures)
+Command took 0.04 seconds -- by a user at 1/12/2022, 1:14:55 pm on unknown cluster
+Prediction and Evaluation
+Prediction using test data
+predictions = bestmodel.transform(test_data)
+display(predictions)
+predictions.select("prediction", "label").show(5)
+Table
+ 
+first_age
+first_hand
+first_ht
+first_id
+first_ioc
+first_rank
+first_rank_points
+second_age
+second_hand
+second_ht
+second_id
+second_ioc
+second_rank
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+16.53
+R
+185
+104755
+FRA
+161
+225
+24.36
+R
+175
+103252
+ESP
+61
+16.65
+R
+185
+104755
+FRA
+139
+272
+21.39
+L
+188
+103852
+ESP
+49
+16.87
+R
+190
+105208
+LAT
+1086
+5
+18.79
+R
+183
+104813
+SLO
+395
+16.88
+R
+183
+102536
+NZL
+1059
+3
+24.51
+R
+185
+101368
+ARG
+82
+16.9
+R
+180
+103720
+AUS
+162
+281
+26.8
+R
+190
+101888
+CZE
+54
+17.05
+R
+185
+102375
+ROU
+240
+90
+20.84
+R
+188
+101767
+SWE
+102
+17.07
+R
+185
+103009
+ROU
+783
+12
+23.95
+R
+183
+101783
+GBR
+88
+17.11
+L
+185
+104745
+ESP
+56
+667
+19.3
+R
+185
+104332
+GER
+317
+17.11
+L
+185
+104745
+ESP
+56
+667
+22.96
+R
+183
+103602
+CHI
+14
+17.19
+R
+196
+102882
+AUS
+439
+53
+22.64
+R
+188
+101917
+RSA
+69
+17.34
+R
+198
+105227
+CRO
+585
+35
+21.94
+R
+190
+104312
+ITA
+55
+17.36
+R
+180
+103857
+RUS
+431
+66
+32.1
+R
+185
+101320
+SWE
+33
+17.4
+R
+193
+103344
+CRO
+969
+6
+28.01
+R
+178
+101507
+ESP
+61
+17.41
+R
+178
+102148
+FRA
+98
+286
+22.29
+L
+190
+101434
+CZE
+24
+17.52
+R
+185
+103819
+SUI
+178
+262
+23.98
+R
+188
+102539
+CZE
+30
+17.77
+R
+196
+102882
+AUS
+410
+64
+25.15
+R
+180
+101613
+USA
+33
+17.84
+R
+183
+105992
+USA
+284
+158
+28.88
+R
+188
+103758
+USA
+77
+Truncated results, showing first 1,000 rows.
+|
+1.60 seconds runtime
+Refreshed 46 days ago
++----------+-----+
+|prediction|label|
++----------+-----+
+|       0.0|  0.0|
+|       0.0|  1.0|
+|       0.0|  0.0|
+|       0.0|  0.0|
+|       0.0|  0.0|
++----------+-----+
+only showing top 5 rows
+
+Command took 1.60 seconds -- by a user at 1/12/2022, 1:14:55 pm on unknown cluster
+from pyspark.ml.evaluation import BinaryClassificationEvaluator
+evaluator=BinaryClassificationEvaluator(rawPredictionCol="rawPrediction",labelCol="label")
+predictions.select("label","rawPrediction","prediction","probability").show(5)
++-----+--------------------+----------+--------------------+
+|label|       rawPrediction|prediction|         probability|
++-----+--------------------+----------+--------------------+
+|  0.0|[16.9774537918863...|       0.0|[0.84887268959431...|
+|  1.0|[16.9298347442672...|       0.0|[0.84649173721336...|
+|  0.0|[15.6829949810256...|       0.0|[0.78414974905128...|
+|  0.0|[14.1561694542589...|       0.0|[0.70780847271294...|
+|  0.0|[13.5458447675040...|       0.0|[0.67729223837520...|
++-----+--------------------+----------+--------------------+
+only showing top 5 rows
+
+Command took 0.70 seconds -- by a user at 1/12/2022, 1:14:55 pm on unknown cluster
+Confusion matrix
+from pyspark.mllib.evaluation import MulticlassMetrics
+preds_and_labels = predictions.select(['prediction','label'])
+metrics = MulticlassMetrics(preds_and_labels.rdd.map(tuple))
+print(metrics.confusionMatrix().toArray())
+/databricks/spark/python/pyspark/sql/context.py:134: FutureWarning: Deprecated in 3.0.0. Use SparkSession.builder.getOrCreate() instead.
+  warnings.warn(
+[[28072.  5387.]
+ [23186. 10322.]]
+Command took 6.59 seconds -- by a user at 1/12/2022, 1:14:55 pm on unknown cluster
+Plot confusion matrix
+cnf_matrix = pd.DataFrame(metrics.confusionMatrix().toArray())
+
+class_names=[0,1] # name  of classes
+fig, ax = plt.subplots()
+tick_marks = np.arange(len(class_names))
+plt.xticks(tick_marks, class_names)
+plt.yticks(tick_marks, class_names)
+
+sns.heatmap(pd.DataFrame(cnf_matrix), annot=True, cmap="YlGnBu" ,fmt='g')
+ax.xaxis.set_label_position("top")
+
+plt.tight_layout()
+plt.title('Confusion matrix', y=1.1)
+plt.ylabel('Actual label')
+plt.xlabel('Predicted label')
+
+display(plt.show())
+
+Command took 0.53 seconds -- by a user at 1/12/2022, 1:14:55 pm on unknown cluster
+Evaluate the best model with ROC
+from pyspark.mllib.evaluation import BinaryClassificationMetrics
+
+predictionAndLabels = predictions.select('prediction','label').rdd
+
+bin_metrics = BinaryClassificationMetrics(predictionAndLabels)
+
+print("Area under PR = %s" % bin_metrics.areaUnderPR)
+print("Area under ROC = %s" % bin_metrics.areaUnderROC)
+Area under PR = 0.6028575939106391
+Area under ROC = 0.5735214105898238
+Command took 4.46 seconds -- by a user at 1/12/2022, 1:14:55 pm on unknown cluster
+from pyspark.mllib.evaluation import BinaryClassificationMetrics
+
+class CurveMetrics(BinaryClassificationMetrics):
+    def __init__(self, *args):
+        super(CurveMetrics, self).__init__(*args)
+
+    def _to_list(self, rdd):
+        points = []
+        for row in rdd.collect():
+            points += [(float(row._1()), float(row._2()))]
+        return points
+
+    def get_curve(self, method):
+        rdd = getattr(self._java_model, method)().toJavaRDD()
+        return self._to_list(rdd)
+Command took 0.04 seconds -- by a user at 1/12/2022, 1:14:55 pm on unknown cluster
+Plot ROC curve
+import matplotlib.pyplot as plt
+
+preds = predictions.select('label','probability').rdd.map(lambda row: (float(row['probability'][1]), float(row['label'])))
+points = CurveMetrics(preds).get_curve('roc')
+
+plt.figure()
+x_val = [x[0] for x in points]
+y_val = [x[1] for x in points]
+plt.title("ROC")
+plt.xlabel("False positive rate")
+plt.ylabel("True positive rate")
+plt.plot(x_val, y_val)
+display(plt.show())
+
+Command took 10.49 seconds -- by a user at 1/12/2022, 1:14:55 pm on unknown cluster
+points
+Out[39]: [(0.0, 0.0),
+ (0.0004781971965689351, 0.001372806493971589),
+ (0.0011954929914223377, 0.0032529545183239824),
+ (0.001673690187991273, 0.004207950340217262),
+ (0.002361098658059117, 0.005252477020413036),
+ (0.00268985923070026, 0.006505909036647965),
+ (0.002958845153770286, 0.007192312283633759),
+ (0.003018619803341403, 0.007431061239107079),
+ (0.0035565916494814547, 0.008833711352512832),
+ (0.004064676170835948, 0.010057299749313596),
+ (0.0043037747691204165, 0.01104213919064104),
+ (0.005200394512687169, 0.013966813895189209),
+ (0.005887802982755014, 0.016563208785961563),
+ (0.006126901581039481, 0.01727945565238152),
+ (0.0065453241280372994, 0.018503044049182286),
+ (0.006664873427179533, 0.018831323862958098),
+ (0.0068143100511073255, 0.019159603676733913),
+ (0.007710929794674078, 0.02098006446221798),
+ (0.007800591769030754, 0.02136803151486212),
+ (0.007979915717744104, 0.021755998567506266),
+ (0.008368450939956364, 0.022054434761847916),
+ (0.008816760811739741, 0.02268115076996538),
+ (0.00902597208523865, 0.023009430583741195),
+ (0.009444394632236468, 0.024024113644502805),
+ (0.00962371858094982, 0.024620986033186104),
+ (0.009892704504019845, 0.02506864032469858),
+ (0.01019157775187543, 0.026143010624328517),
+ (0.010699662273229923, 0.027187537304524292),
+ (0.010878986221943273, 0.02733675540169512),
+ (0.011118084820227742, 0.02867971827623254),
+ (0.011476732717654443, 0.029843619434164977),
+ (0.012642338384291222, 0.03223110898889817),
+ (0.013030873606503481, 0.03282798137758147),
+ (0.01326997220478795, 0.033395010146830606),
+ (0.013807944050928002, 0.03426047511042139),
+ (0.013957380674855793, 0.034588754924197204),
+ (0.014106817298783585, 0.035036409215709684),
+ (0.014256253922711378, 0.03521547093231467),
+ (0.01536208493977704, 0.03628984123194461),
+ (0.01572073283720374, 0.03730452429270622),
+ (0.01595983143548821, 0.03778202220365286),
+ (0.017513972324337247, 0.041005133102542675),
+ (0.01772318359783616, 0.041661692730094305),
+ (0.0180519441704773, 0.04270621941029008),
+ (0.018171493469619535, 0.04288528112689507),
+ (0.018769239965330704, 0.044466992956905815),
+ (0.018888789264472936, 0.04485496000954996),
+ (0.018948563914044054, 0.045123552584457445),
+ (0.019127887862757403, 0.04548167601766742),
+ (0.019337099136256315, 0.04607854840635072),
+ (0.019516423084969665, 0.04625761012295571),
+ (0.019665859708897455, 0.04646651545899487),
+ (0.020203831555037507, 0.047958696430703114),
+ (0.020442930153321975, 0.04897337949146473),
+ (0.020921127349890913, 0.05025665512713382),
+ (0.021698197794315432, 0.051480243523934585),
+ (0.02187752174302878, 0.05198758505431539),
+ (0.02205684569174213, 0.052286021248657034),
+ (0.022206282315669925, 0.05243523934582786),
+ (0.022415493589168833, 0.05309179897337949),
+ (0.022893690785737768, 0.05398710755640444),
+ (0.023162676708807794, 0.055031634236600215),
+ (0.023371887982306702, 0.055688193864151844),
+ (0.023730535879733405, 0.05637459711113764),
+ (0.02399952180280343, 0.05670287692491345),
+ (0.024119071101945666, 0.05691178226095261),
+ (0.024328282375444574, 0.057448967410767576),
+ (0.0245972682985146, 0.05807568341888504),
+ (0.024836366896799068, 0.058583024949265844),
+ (0.025045578170297976, 0.05891130476304166),
+ (0.02519501479422577, 0.05920974095738331),
+ (0.025762873965151378, 0.06016473677927659),
+ (0.025912310589079172, 0.06028411125701325),
+ (0.02612152186257808, 0.060612391070789064),
+ (0.02633073313607699, 0.06111973260116987),
+ (0.027615888101856004, 0.06401456368628387),
+ (0.027705550076212677, 0.06461143607496717),
+ (0.02821363459756717, 0.0658648680912021),
+ (0.029199916315490602, 0.06679002029366121),
+ (0.02940912758898951, 0.06702876924913453),
+ (0.0295585642129173, 0.06729736182404202),
+ (0.030604620580411846, 0.06861048107914527),
+ (0.03072416987955408, 0.0688492300346186),
+ (0.031650676947906395, 0.0706398472006685),
+ (0.03183000089661974, 0.07096812701444431),
+ (0.03218864879404645, 0.07189327921690343),
+ (0.033473803759825456, 0.07398233257729497),
+ (0.03356346573418213, 0.07416139429389997),
+ (0.03398188828117995, 0.07639966575146234),
+ (0.03422098687946442, 0.07660857108750149),
+ (0.03440031082817777, 0.07681747642354064),
+ (0.03457963477689112, 0.07708606899844814),
+ (0.034938282674317825, 0.07738450519278978),
+ (0.035027944648674494, 0.07786200310373642),
+ (0.035625691144385664, 0.07869762444789304),
+ (0.035894677067455694, 0.07908559150053719),
+ (0.03601422636659793, 0.079413871314313),
+ (0.03709017005887803, 0.08174167363017787),
+ (0.03780746585373143, 0.08257729497433448),
+ (0.03789712782808811, 0.08275635669093948),
+ (0.03810633910158702, 0.08305479288528113),
+ (0.03819600107594369, 0.08359197803509609),
+ (0.038315550375085924, 0.08371135251283275),
+ (0.03846498699901372, 0.08406947594604273),
+ (0.038853522221225976, 0.08457681747642354),
+ (0.03900295884515377, 0.08487525367076519),
+ (0.039242057443438234, 0.08502447176793601),
+ (0.03936160674258047, 0.08514384624567267),
+ (0.03954093069129382, 0.08583024949265847),
+ (0.039720254640007176, 0.08615852930643428),
+ (0.0403478884605039, 0.08660618359794676),
+ (0.04046743775964613, 0.0869046197922884),
+ (0.04052721240921725, 0.0871732123671959),
+ (0.041274395528856214, 0.08848633162229916),
+ (0.04199169132370961, 0.08947117106362659),
+ (0.042440001195492995, 0.09033663602721738),
+ (0.04474132520398099, 0.09570848752536708),
+ (0.04492064915269434, 0.09582786200310374),
+ (0.04504019845183658, 0.09609645457801122),
+ (0.045458620998834395, 0.09690223230273368),
+ (0.04614602946890224, 0.09803628984123194),
+ (0.046624226665471176, 0.09857347499104692),
+ (0.04680355061418452, 0.09908081652142772),
+ (0.047311635135539015, 0.09958815805180853),
+ (0.04746107175946681, 0.09967768891011101),
+ (0.04784960698167907, 0.10012534320162349),
+ (0.048865776024388054, 0.10194580398710755),
+ (0.04976239576795481, 0.10337829771994747),
+ (0.05006126901581039, 0.10373642115315745),
+ (0.05107743805851938, 0.10707890652978393),
+ (0.05128664933201829, 0.10764593529903306),
+ (0.05164529722944499, 0.10836218216545303),
+ (0.05254191697301175, 0.10952608332338545),
+ (0.05278101557129621, 0.10991405037602961),
+ (0.052960339520009565, 0.11036170466754208),
+ (0.05310977614393736, 0.11086904619792289),
+ (0.05319943811829403, 0.11113763877283037),
+ (0.053289100092650706, 0.11149576220604035),
+ (0.0534385367165785, 0.11182404201981616),
+ (0.05409605786186079, 0.11421153157454936),
+ (0.05439493110971637, 0.11477856034379849),
+ (0.05454436773364416, 0.11498746567983766),
+ (0.054813353656714185, 0.1152859018741793),
+ (0.05496279028064198, 0.11546496359078429),
+ (0.055052452254998656, 0.11624089769607258),
+ (0.05550076212678203, 0.11692730094305838),
+ (0.05585941002420873, 0.11722573713740002),
+ (0.05606862129770764, 0.11743464247343918),
+ (0.05618817059684988, 0.11761370419004417),
+ (0.05729400161391554, 0.11847916915363495),
+ (0.05735377626348666, 0.1187776053479766),
+ (0.05759287486177112, 0.11904619792288408),
+ (0.05783197346005559, 0.11940432135609406),
+ (0.05819062135748229, 0.11964307031156739),
+ (0.058340057981410086, 0.12003103736421153),
+ (0.058668818554051226, 0.12015041184194819),
+ (0.05884814250276458, 0.12026978631968485),
+ (0.05908724110104904, 0.12134415661931479),
+ (0.05914701575062016, 0.12146353109705145),
+ (0.05935622702411907, 0.12188134176912976),
+ (0.06001374816940136, 0.12292586844932553),
+ (0.06028273409247138, 0.12331383550196968),
+ (0.061029917212110346, 0.12423898770442879),
+ (0.061149466511252575, 0.12486570371254625),
+ (0.06132879045996593, 0.12522382714575625),
+ (0.061627663707821516, 0.12599976125104453),
+ (0.06180698765653486, 0.12671600811746447),
+ (0.06210586090439045, 0.1270442879312403),
+ (0.06491526943423294, 0.13125223827145757),
+ (0.06512448070773186, 0.13128208189089172),
+ (0.06524403000687408, 0.13202817237674586),
+ (0.06563256522908635, 0.1323266085710875),
+ (0.06599121312651304, 0.13280410648203414),
+ (0.0661705370752264, 0.13304285543750746),
+ (0.06685794554529424, 0.1350423779395965),
+ (0.06715681879314983, 0.13569893756714815),
+ (0.06963746675035118, 0.1393995463769846),
+ (0.07002600197256344, 0.1400859496239704),
+ (0.07014555127170567, 0.14035454219887789),
+ (0.0706237484682746, 0.14157813059567864),
+ (0.07074329776741684, 0.14172734869284948),
+ (0.07095250904091575, 0.14202578488719111),
+ (0.07113183298962909, 0.14292109347021606),
+ (0.07140081891269913, 0.143995463769846),
+ (0.0716996921605547, 0.14489077235287096),
+ (0.07208822738276696, 0.1458756117941984),
+ (0.07226755133148031, 0.14623373522740837),
+ (0.07268597387847814, 0.14650232780231587),
+ (0.07310439642547596, 0.14694998209382834),
+ (0.0732837203741893, 0.14721857466873584),
+ (0.07364236827161601, 0.14742748000477499),
+ (0.07388146686990048, 0.14793482153515577),
+ (0.07427000209211274, 0.14960606422346903),
+ (0.07492752323739502, 0.15071027814253313),
+ (0.07510684718610837, 0.1511579324340456),
+ (0.07555515705789174, 0.15205324101707055),
+ (0.0757344810066051, 0.15220245911424138),
+ (0.07636211482710183, 0.15336636027217382),
+ (0.07651155145102961, 0.15366479646651546),
+ (0.07663110075017185, 0.1538737018025546),
+ (0.07669087539974297, 0.15420198161633042),
+ (0.07707941062195522, 0.15512713381878954),
+ (0.07716907259631191, 0.15536588277426286),
+ (0.0773185092202397, 0.15560463172973618),
+ (0.07746794584416748, 0.15599259878238034),
+ (0.07782659374159419, 0.15649994031276113),
+ (0.07794614304073642, 0.1566193147904978),
+ (0.07806569233987866, 0.1569475946042736),
+ (0.07845422756209092, 0.15724603079861527),
+ (0.07881287545951762, 0.15820102662050853),
+ (0.07917152335694431, 0.15870836815088935),
+ (0.0799784811261544, 0.16073773427241256),
+ (0.08042679099793777, 0.16151366837770084),
+ (0.0810544248184345, 0.16237913334129164),
+ (0.08129352341671897, 0.16276710039393577),
+ (0.081562509339789, 0.16297600572997492),
+ (0.08201081921157237, 0.1636922525963949),
+ (0.08204070653635794, 0.1638713143129999),
+ (0.08227980513464239, 0.1641995941267757),
+ (0.0824292417585702, 0.16443834308224903),
+ (0.08257867838249798, 0.16467709203772232),
+ (0.08278788965599689, 0.16491584099319564),
+ (0.08296721360471024, 0.1650352154709323),
+ (0.08365462207477808, 0.16676614539811388),
+ (0.08455124181834484, 0.16834785722812462),
+ (0.08473056576705819, 0.16885519875850544),
+ (0.08526853761319825, 0.16984003819983287),
+ (0.08598583340805165, 0.17088456488002865),
+ (0.08718132639947399, 0.17363017786797183),
+ (0.0875997489464718, 0.17431658111495762),
+ (0.08771929824561403, 0.17452548645099678),
+ (0.08789862219432738, 0.17500298436194342),
+ (0.08804805881825518, 0.17527157693685091),
+ (0.08822738276696852, 0.17539095141458755),
+ (0.08849636869003856, 0.17619672913931),
+ (0.08906422786096417, 0.17670407066969082),
+ (0.09005050957888759, 0.17870359317177986),
+ (0.09017005887802983, 0.1788528112689507),
+ (0.09217250963866225, 0.1829413871314313),
+ (0.09271048148480229, 0.18359794675898292),
+ (0.0948623688693625, 0.1871194938522144),
+ (0.09540034071550256, 0.187955115196371),
+ (0.09566932663857258, 0.18870120568222515),
+ (0.09590842523685705, 0.1889996418765668),
+ (0.09677515765563824, 0.19105885161752417),
+ (0.09704414357870828, 0.19138713143129998),
+ (0.09722346752742161, 0.19150650590903665),
+ (0.09758211542484832, 0.19275993792527157),
+ (0.09776143937356167, 0.19335681031395488),
+ (0.10158701694611315, 0.2011758386057061),
+ (0.10182611554439762, 0.20174286737495523),
+ (0.10203532681789652, 0.20213083442759938),
+ (0.10230431274096656, 0.20266801957741434),
+ (0.1028422845871066, 0.20362301539930763),
+ (0.10326070713410443, 0.20445863674346423),
+ (0.10346991840760333, 0.20460785484063507),
+ (0.10364924235631669, 0.20532410170705503),
+ (0.1042171015272423, 0.20580159961800168),
+ (0.104575749424669, 0.2061895666706458),
+ (0.10475507337338234, 0.20684612629819746),
+ (0.10487462267252458, 0.2070550316342366),
+ (0.10511372127080905, 0.2077414348812224),
+ (0.10517349592038017, 0.20786080935895906),
+ (0.10544248184345019, 0.2080995583144324),
+ (0.10577124241609133, 0.2082487764116032),
+ (0.10610000298873248, 0.20881580518085233),
+ (0.1066678621596581, 0.20950220842783812),
+ (0.10705639738187035, 0.2098603318610481),
+ (0.10741504527929704, 0.21018861167482392),
+ (0.10780358050150932, 0.21051689148859973),
+ (0.10813234107415046, 0.21102423301898054),
+ (0.10935772139035835, 0.21341172257371374),
+ (0.11007501718521175, 0.21406828220126536),
+ (0.11043366508263845, 0.21514265250089532),
+ (0.11070265100570847, 0.2158290557478811),
+ (0.11088197495442183, 0.21612749194222275),
+ (0.11118084820227742, 0.21696311328637938),
+ (0.11150960877491856, 0.21738092395845768),
+ (0.11156938342448967, 0.21758982929449683),
+ (0.11165904539884634, 0.21782857824997015),
+ (0.11255566514241311, 0.21917154112450757),
+ (0.11360172150990765, 0.22146949982093828),
+ (0.11384082010819212, 0.22194699773188492),
+ (0.11407991870647659, 0.22236480840396322),
+ (0.11416958068083326, 0.22251402650113405),
+ (0.11437879195433216, 0.2229019935537782),
+ (0.11850324277473924, 0.23212367195893518),
+ (0.11916076392002152, 0.2335561656917751),
+ (0.11928031321916376, 0.23379491464724841),
+ (0.11969873576616157, 0.23433209979706338),
+ (0.12044591888580053, 0.23528709561895667),
+ (0.12080456678322724, 0.2361824042019816),
+ (0.12110344003108282, 0.2368091202100991),
+ (0.12125287665501061, 0.23707771278500656),
+ (0.12152186257808063, 0.2374656798376507),
+ (0.12188051047550734, 0.23803270860689985),
+ (0.12200005977464957, 0.238241613942939),
+ (0.12229893302250515, 0.23886832995105647),
+ (0.12400251053528198, 0.2431956547690104),
+ (0.12460025703099316, 0.24486689745732362),
+ (0.12627394721898444, 0.24725438701205682),
+ (0.12681191906512448, 0.24823922645338425),
+ (0.1277982007830479, 0.25002984361943414),
+ (0.12797752473176127, 0.2505968723886833),
+ (0.12997997549239368, 0.255431538737018),
+ (0.13057772198810486, 0.2561776292228721),
+ (0.130906482560746, 0.2563865345589113),
+ (0.1313249051077438, 0.2571027814253313),
+ (0.1314743417316716, 0.25719231228363376),
+ (0.1316835530051705, 0.2573116867613704),
+ (0.13186287695388385, 0.25761012295571206),
+ (0.132191637526525, 0.25778918467231704),
+ (0.13237096147523836, 0.25823683896382954),
+ (0.13308825727009174, 0.259042616688552),
+ (0.13335724319316178, 0.25940074012176195),
+ (0.1362264263725754, 0.2643249373283992),
+ (0.13667473624435877, 0.2649218097170825),
+ (0.13682417286828655, 0.2650710278142533),
+ (0.14109806031262143, 0.274233018980542),
+ (0.14250276457754266, 0.27566551271338186),
+ (0.14304073642368273, 0.2770980064462218),
+ (0.14316028572282494, 0.2773367554016951),
+ (0.1437580322185361, 0.2781126895069834),
+ (0.1442063420903195, 0.2788289363734034),
+ (0.14438566603903286, 0.2792467470454817),
+ (0.1450730745091007, 0.2813656440253074),
+ (0.1453420604321707, 0.2815148621224782),
+ (0.14839056756029767, 0.287990927539692),
+ (0.1488089901072955, 0.2889459233615853),
+ (0.1494665112525778, 0.28951295213083444),
+ (0.1496757225260767, 0.2896621702280053),
+ (0.1498251591500045, 0.28990091918347854),
+ (0.15000448309871783, 0.2900501372806494),
+ (0.1502435816970023, 0.2904082607138594),
+ (0.15033324367135897, 0.2905574788110302),
+ (0.15117008876535462, 0.29112450758027936),
+ (0.1516781732867091, 0.2920795034021726),
+ (0.15212648315849248, 0.2926763757908559),
+ (0.15227591978242028, 0.2931837173212367),
+ (0.1532024268507726, 0.2938999641876567),
+ (0.15344152544905706, 0.2944669929569058),
+ (0.15359096207298484, 0.29458636743464245),
+ (0.15502555366269166, 0.2971230750865465),
+ (0.155204877611405, 0.2975408857586248),
+ (0.15565318748318838, 0.29948072102184553),
+ (0.15610149735497175, 0.29971946997731885),
+ (0.1563704832780418, 0.30013728064939715),
+ (0.15666935652589736, 0.3003760296048705),
+ (0.15708777907289517, 0.3011221200907246),
+ (0.15753608894467855, 0.30234570848752534),
+ (0.15762575091903525, 0.3028530500179062),
+ (0.15783496219253415, 0.303181329831682),
+ (0.15810394811560416, 0.30344992240658947),
+ (0.1582234974147464, 0.30386773307866777),
+ (0.15903045518395648, 0.30500179061716604),
+ (0.15932932843181208, 0.30577772472245435),
+ (0.16082369467108998, 0.30780709084397756),
+ (0.16106279326937445, 0.30843380685209504),
+ (0.1613915538420156, 0.30917989733794915),
+ (0.1615409904659434, 0.30938880267398833),
+ (0.16186975103858453, 0.30968723886832994),
+ (0.162108849636869, 0.3098663005849349),
+ (0.16234794823515347, 0.30995583144323746),
+ (0.1625272721838668, 0.31022442401814493),
+ (0.1626767088077946, 0.3105825474513549),
+ (0.16303535670522132, 0.311149576220604),
+ (0.16339400460264802, 0.31165691775098486),
+ (0.16500792014106816, 0.31386534558911305),
+ (0.165426342688066, 0.3149994031276113),
+ (0.1658447652350638, 0.3157156499940313),
+ (0.16644251173077498, 0.3169093947713979),
+ (0.16659194835470276, 0.3170884564880029),
+ (0.1668011596282017, 0.3174167363017787),
+ (0.17307749783316895, 0.3264295093708965),
+ (0.1741235542006635, 0.32765309776769724),
+ (0.1752891598673003, 0.3312641757192312),
+ (0.1753489345168714, 0.33162229915244124),
+ (0.1758570190382259, 0.3325176077354662),
+ (0.17597656833736813, 0.3327265130715053),
+ (0.17732149795271826, 0.3350841590068043),
+ (0.17803879374757164, 0.3359794675898293),
+ (0.17833766699542725, 0.3362480601647368),
+ (0.17857676559371172, 0.33651665273964426),
+ (0.1788756388415673, 0.3373224304643667),
+ (0.17953315998684957, 0.33833711352512835),
+ (0.18025045578170298, 0.33959054554136325),
+ (0.18105741355091307, 0.3409335084159007),
+ (0.18243223049104876, 0.34385818312044886),
+ (0.18542096296960459, 0.34660379610839204),
+ (0.1858393855166024, 0.3476184791691536),
+ (0.18601870946531576, 0.3477378536468903),
+ (0.18661645596102694, 0.34809597708010026),
+ (0.1867061179353836, 0.3482451951772711),
+ (0.18709465315759585, 0.3490808165214277),
+ (0.1875130757045937, 0.35009549958218933),
+ (0.18897755461908605, 0.3540050137280649),
+ (0.18984428703786724, 0.3549600095499582),
+ (0.19068113213186288, 0.35555688193864154),
+ (0.19092023073014736, 0.35576578727468067),
+ (0.19127887862757403, 0.35627312880506146),
+ (0.19163752652500074, 0.35722812462695475),
+ (0.1917271884993574, 0.3574071863435597),
+ (0.1918766251232852, 0.3578249970156381),
+ (0.19280313219163753, 0.35883968007639966),
+ (0.1938193012343465, 0.3594962397039513),
+ (0.20024507606324157, 0.3759400740121762),
+ (0.20093248453330942, 0.3765369464008595),
+ (0.2010221465076661, 0.37668616449803033),
+ (0.2017394423025195, 0.376984600692372),
+ (0.20661107624256553, 0.3861465918586606),
+ (0.2079261185331301, 0.3899367315267996),
+ (0.20816521713141456, 0.3904739166766145),
+ (0.20840431572969903, 0.39083204010982453),
+ (0.20846409037927016, 0.3910111018264295),
+ (0.20873307630234017, 0.3913095380207712),
+ (0.209151498849338, 0.39190641040945445),
+ (0.20945037209719358, 0.3926226572758744),
+ (0.20962969604590692, 0.39277187537304525),
+ (0.21004811859290476, 0.3930106243285186),
+ (0.21085507636211484, 0.39396562015041187),
+ (0.2117516961056816, 0.3946221797779635),
+ (0.21190113272960936, 0.3947415542557001),
+ (0.21276786514839058, 0.3960248298913692),
+ (0.21291730177231835, 0.3963232660857109),
+ (0.21408290743895514, 0.39760654172138),
+ (0.21441166801159628, 0.39805419601289244),
+ (0.21488986520816522, 0.3990091918347857),
+ (0.21527840043037746, 0.39915840993195656),
+ (0.2165635553961565, 0.40145636862838724),
+ (0.2169222032935832, 0.40169511758386056),
+ (0.2171314145670821, 0.40241136445028053),
+ (0.21751994978929437, 0.4031276113167005),
+ (0.21844645685764666, 0.40444073057180374),
+ (0.21883499207985893, 0.4048286976244479),
+ (0.2192235273020712, 0.40512713381878956),
+ (0.21967183717385458, 0.40563447534917035),
+ (0.21985116112256792, 0.40614181687955114),
+ (0.2199408230969246, 0.4064402530738928),
+ (0.22017992169520906, 0.4071564999403128),
+ (0.22032935831913686, 0.4073952488957861),
+ (0.22083744284049134, 0.4083204010982452),
+ (0.223975611942975, 0.41169273009430585),
+ (0.2244538091395439, 0.4118419481914767),
+ (0.22478256971218505, 0.4122299152441208),
+ (0.22511133028482622, 0.41243882058015996),
+ (0.22544009085746736, 0.4126775695356333),
+ (0.2257688514301085, 0.4131550674465799),
+ (0.2261274993275352, 0.41363256535752657),
+ (0.22663558384888968, 0.4159006804345231),
+ (0.2268447951223886, 0.41613942938999643),
+ (0.22753220359245643, 0.4171839560701922),
+ (0.22774141486595534, 0.4177808284588755),
+ (0.22801040078902537, 0.41816879551151964),
+ (0.22818972473773871, 0.41837770084755876),
+ (0.2291461191308766, 0.42037722334964783),
+ (0.22968409097701664, 0.42061597230512116),
+ (0.22995307690008668, 0.421302375552107),
+ (0.2302220628231567, 0.4217500298436194),
+ (0.23132789384022237, 0.42368986510684015),
+ (0.23201530231029022, 0.4247045481676018),
+ (0.23243372485728803, 0.42521188969798257),
+ (0.2356914432589139, 0.4283156261191357),
+ (0.23575121790848502, 0.42870359317177986),
+ (0.23607997848112616, 0.42882296764951655),
+ (0.2361995277802684, 0.4291810910827265),
+ (0.23631907707941063, 0.429270621941029),
+ (0.23658806300248064, 0.4295392145159365),
+ (0.23679727427597955, 0.4295989017548048),
+ (0.23787321796825966, 0.43112092634594723),
+ (0.23814220389132967, 0.43135967530142055),
+ (0.2391583729340387, 0.4341351319087979),
+ (0.2392779222331809, 0.4343141936254029),
+ (0.2395767954810365, 0.4347320042974812),
+ (0.24232642936130788, 0.43858183120448846),
+ (0.2477061478227084, 0.44252118896979825),
+ (0.2479153590962073, 0.4426704070669691),
+ (0.2482142323440629, 0.44338665393338905),
+ (0.2486924295406318, 0.44368509012773066),
+ (0.24911085208762965, 0.44425211889697985),
+ (0.2506351056516931, 0.44595320520472725),
+ (0.25081442960040645, 0.4465202339739764),
+ (0.25198003526704327, 0.44944490867852455),
+ (0.25260766908753995, 0.450429748119852),
+ (0.25320541558325116, 0.4507580279336278),
+ (0.25478944379688573, 0.4528769249134535),
+ (0.2552975283182402, 0.4535633281604393),
+ (0.2635763172838399, 0.4586068998448132),
+ (0.26384530320690996, 0.4588456488002865),
+ (0.2640246271556233, 0.45896502327802313),
+ (0.26423383842912224, 0.4593529903306673),
+ (0.26519023282226006, 0.46009908081652146),
+ (0.265399444095759, 0.46027814253312643),
+ (0.26563854269404347, 0.46048704786916556),
+ (0.2659673032666846, 0.4610839202578489),
+ (0.2674616695059625, 0.462367195893518),
+ (0.26808930332645925, 0.4629939119016354),
+ (0.2684778385486715, 0.46350125343201626),
+ (0.26880659912131266, 0.46382953324579207),
+ (0.26907558504438267, 0.46397875134296285),
+ (0.2693744582922383, 0.46454578011221204),
+ (0.2696434442153083, 0.46487405992598785),
+ (0.27024119071101943, 0.4658290557478811),
+ (0.27054006395887503, 0.46603796108392026),
+ (0.2706596132580173, 0.46612749194222275),
+ (0.27263217669386414, 0.46860451235525846),
+ (0.27397710630921424, 0.46944013369941506),
+ (0.27442541618099764, 0.46988778799092756),
+ (0.2832421769927374, 0.4893756714814373),
+ (0.28342150094145074, 0.4894950459591739),
+ (0.28395947278759076, 0.4903008236838964),
+ (0.2851250784542276, 0.4920019099916438),
+ (0.28685854329178995, 0.4972245433926227),
+ (0.2874861771122867, 0.4982093828339501),
+ (0.2877551630353567, 0.4985376626477259),
+ (0.28793448698407004, 0.49874656798376504),
+ (0.2885920081293523, 0.4994031276113167),
+ (0.2887115574284946, 0.4995523457084875),
+ (0.2890403180011357, 0.5002089053360391),
+ (0.28924952927463465, 0.5003879670526441),
+ (0.2902358109925581, 0.5008654649635907),
+ (0.29047490959084254, 0.50107437029963),
+ (0.29170028990705044, 0.5025367076519041),
+ (0.2924773603514749, 0.5035215470932315),
+ (0.2931647688215428, 0.5045660737734272),
+ (0.2936728533428973, 0.5053718514981497),
+ (0.294300487163394, 0.5060880983645697),
+ (0.29474879703517737, 0.5064163781783455),
+ (0.2956155294539586, 0.5074310612391071),
+ (0.29570519142831525, 0.5075504357168438),
+ (0.2963029379240264, 0.5090127730691179),
+ (0.2964523745479542, 0.5091619911662887),
+ (0.29681102244538093, 0.5096096454578011),
+ (0.2975283182402343, 0.510863077474036),
+ (0.297617980214591, 0.511221200907246),
+ (0.2977076421889477, 0.5114301062432852),
+ (0.29836516333422997, 0.5119672913931002),
+ (0.2989330225051556, 0.5127432254983885),
+ (0.29917212110344005, 0.5131311925510326),
+ (0.2996204309752234, 0.5136385340814134),
+ (0.3000687408470068, 0.514295093708965),
+ (0.30030783944529127, 0.5149814969559509),
+ (0.30066648734271795, 0.5153097767697267),
+ (0.3008756986162169, 0.5153993076280291),
+ (0.303505783197346, 0.5200549122597589),
+ (0.30771989599210975, 0.5232481795392145),
+ (0.30894527630831764, 0.5248298913692253),
+ (0.3094832481544577, 0.5252477020413036),
+ (0.30966257210317105, 0.5258147308105527),
+ (0.30978212140231326, 0.525874418049421),
+ (0.31058907917152334, 0.5265608212964068),
+ (0.31061896649630893, 0.5267100393935776),
+ (0.3107982904450223, 0.5267398830130118),
+ (0.31100750171852115, 0.5267995702518802),
+ (0.3112764876415912, 0.5268891011101826),
+ (0.3115454735646612, 0.527127850065656),
+ (0.313727248274007, 0.5302315864868091),
+ (0.3140858961714337, 0.5306792407783216),
+ (0.31462386801757375, 0.531126895069834),
+ (0.317582713171344, 0.5340814133938164),
+ (0.3177620371200574, 0.5343798495881581),
+ (0.3182402343166263, 0.5346782857824997),
+ (0.3188379808123375, 0.5366778082845888),
+ (0.31916674138497864, 0.5371851498149696),
+ (0.3194058399832631, 0.5376626477259162),
+ (0.3202426850772587, 0.538528112689507),
+ (0.3207507695986132, 0.5398412319446102),
+ (0.3211393048208255, 0.5402291989972544),
+ (0.32137840341910995, 0.5405276351915961),
+ (0.32744553035057833, 0.546138235645219),
+ (0.32762485429929167, 0.5461979228840874),
+ (0.3278340655727906, 0.5464366718395607),
+ (0.32816282614543174, 0.5465858899367315),
+ (0.3287605726411429, 0.5473618240420198),
+ (0.3289100092650707, 0.5475408857586248),
+ (0.32992617830777965, 0.5479288528112689),
+ (0.3301652769060641, 0.548286976244479),
+ (0.33052392480349085, 0.5484361943416498),
+ (0.3308227980513464, 0.5486450996776889),
+ (0.33103200932484533, 0.5487346305359914),
+ (0.33159986849577094, 0.5492419720663723),
+ (0.3316895304701276, 0.5495105646412797),
+ (0.332137840341911, 0.5504954040826071),
+ (0.3397591081622284, 0.5577474036051092),
+ (0.34014764338444065, 0.558075683418885),
+ (0.34029708000836845, 0.5581652142771876),
+ (0.3491736154696793, 0.5670287692491346),
+ (0.3493230520936071, 0.567118300107437),
+ (0.3514749394781673, 0.5695654769010385),
+ (0.3516841507516662, 0.5698042258565119),
+ (0.3521324606234496, 0.5700728184314193),
+ (0.35273020711916075, 0.5708189089172735),
+ (0.35299919304223076, 0.5712068759699176),
+ (0.3532084043157297, 0.5714157813059568),
+ (0.3535072775635853, 0.5722812462695476),
+ (0.3543441226575809, 0.5732959293303092),
+ (0.35589826354642995, 0.57451951772711),
+ (0.35706386921306676, 0.5752357645935299),
+ (0.35742251711049344, 0.5753252954518324),
+ (0.36390806658895963, 0.5796824638892205),
+ (0.3644161511103141, 0.5798913692252596),
+ (0.36489434830688305, 0.5801599618001672),
+ (0.36531277085388086, 0.5805777724722454),
+ (0.36570130607609314, 0.5809955831443238),
+ (0.3659404046743776, 0.5812044884803629),
+ (0.3660599539735198, 0.5813835501969679),
+ (0.3665082638453032, 0.5817715172496121),
+ (0.3667174751188021, 0.5820102662050853),
+ (0.3677336441615111, 0.5828160439298078),
+ (0.36794285543501, 0.5830249492658469),
+ (0.3683015033324367, 0.5832935418407544),
+ (0.368959024477719, 0.5839202578488719),
+ (0.3694073343495024, 0.5843679121403844),
+ (0.3700349681699991, 0.5847558791930285),
+ (0.37078215128963804, 0.585382595201146),
+ (0.37149944708449145, 0.5860689984481318),
+ (0.37230640485370153, 0.5866957144562492),
+ (0.3726949400759138, 0.5869046197922884),
+ (0.37302370064855495, 0.5871433687477617),
+ (0.37344212319555276, 0.5876507102781425),
+ (0.37771601063988763, 0.5921570968127015),
+ (0.3781942078364566, 0.5923958457681747),
+ (0.37912071490480886, 0.5934403724483706),
+ (0.3807047431184435, 0.594783335322908),
+ (0.383783137571356, 0.6040050137280649),
+ (0.38411189814399715, 0.6043631371612749),
+ (0.3848291939388505, 0.6050793840276949),
+ (0.3853671657849906, 0.6059150053718515),
+ (0.38560626438327505, 0.6060642234690223),
+ (0.38778803909262083, 0.609794675898293),
+ (0.38943184195582653, 0.6109884206756595),
+ (0.38964105322932546, 0.6111376387728303),
+ (0.39083654622074776, 0.612331383550197),
+ (0.39128485609253116, 0.6125701325056703),
+ (0.3918527152634568, 0.6130177867971828),
+ (0.3921814758360979, 0.613256535752656),
+ (0.3924803490839535, 0.613435597469261),
+ (0.39292865895573686, 0.6135251283275636),
+ (0.39502077169072597, 0.6152560582547452),
+ (0.3953495322633671, 0.6155544944490868),
+ (0.3955886308616516, 0.6157932434045601),
+ (0.39648525060521833, 0.6167780828458875),
+ (0.39675423652828834, 0.6169571445624925),
+ (0.3972324337248573, 0.617404798854005),
+ (0.39762096894706955, 0.6177927659066491),
+ (0.39812905346842403, 0.61865823087024),
+ (0.39848770136585077, 0.6187477617285424),
+ (0.398607250664993, 0.6188074489674108),
+ (0.3992348844854897, 0.6193147904977916),
+ (0.39986251830598646, 0.6200907246030799),
+ (0.40108789862219435, 0.6211650949027098),
+ (0.40120744792133656, 0.6213143129998806),
+ (0.40144654651962103, 0.6214038438581831),
+ (0.40303057473325565, 0.623552584457443),
+ (0.40353865925461013, 0.623731646174048),
+ (0.4039869691263935, 0.6240300823683896),
+ (0.4041961803998924, 0.6245971111376388),
+ (0.4049134761947458, 0.6252835143846246),
+ (0.40518246211781583, 0.6254327324817954),
+ (0.40560088466481364, 0.6260594484899129),
+ (0.4059296452374548, 0.6263280410648203),
+ (0.40616874383573925, 0.6264772591619912),
+ (0.40673660300666487, 0.6268353825952011),
+ (0.41349113840820106, 0.6340575384982691),
+ (0.41543381451926237, 0.6353408141339382),
+ (0.41609133566454465, 0.6360570610003581),
+ (0.41665919483547026, 0.6366240897696073),
+ (0.41731671598075254, 0.6375193983526322),
+ (0.4211721808780896, 0.6413393816402053),
+ (0.42162049074987296, 0.6418467231705861),
+ (0.4218297020233719, 0.6419362540288887),
+ (0.42221823724558416, 0.6422048466037961),
+ (0.4226964344421531, 0.6425032827981377),
+ (0.4231148569891509, 0.6426823445147427),
+ (0.4233539555874354, 0.6429509370896502),
+ (0.4235332795361487, 0.6431299988062552),
+ (0.4247287725275711, 0.6444431180613585),
+ (0.42523685704892555, 0.6449803032111735),
+ (0.4262530260916345, 0.6462337352274083),
+ (0.4264323500403479, 0.6464426405634476),
+ (0.4277175050061269, 0.6470992001909992),
+ (0.4279267162796258, 0.6473677927659066),
+ (0.4296601811171882, 0.6485913811627074),
+ (0.4299889416898293, 0.6489495045959174),
+ (0.4302579276128994, 0.6492777844096932),
+ (0.430825786783825, 0.6501134057538498),
+ (0.4323201530231029, 0.6519040229198997),
+ (0.4327385755701007, 0.6525605825474513),
+ (0.43321677276666964, 0.652859018741793),
+ (0.4335754206640964, 0.6530679240778322),
+ (0.4337547446128097, 0.6531574549361346),
+ (0.43889536447592575, 0.6577235287095619),
+ (0.43919423772378136, 0.6577832159484303),
+ (0.43931378702292356, 0.6579025904261668),
+ (0.4400609701425625, 0.658648680912021),
+ (0.4420933082279805, 0.6600214874059926),
+ (0.4425715054245494, 0.6610361704667542),
+ (0.4426910547236917, 0.6611555449444909),
+ (0.44290026599719057, 0.6613346066610959),
+ (0.4435577871424729, 0.66243882058016),
+ (0.4442451956125407, 0.66279694401337),
+ (0.44457395618518186, 0.6629163184911065),
+ (0.445918885800532, 0.6641697505073415),
+ (0.4478316745868077, 0.6650352154709324),
+ (0.44801099853552107, 0.6653038080458398),
+ (0.44884784362951674, 0.6659902112928255),
+ (0.45906930870617774, 0.6784648442163066),
+ (0.4601452523984578, 0.6787931240300824),
+ (0.46056367494545564, 0.6790617166049898),
+ (0.4608924355180968, 0.6793601527993315),
+ (0.4734749992528169, 0.6900441685567625),
+ (0.4756866612869482, 0.6927599379252716),
+ (0.4761947458083027, 0.6930285305001791),
+ (0.4764039570818016, 0.693386653933389),
+ (0.4767626049792283, 0.6936850901277307),
+ (0.47810753459457844, 0.6949385221439656),
+ (0.47840640784243404, 0.6950877402411364),
+ (0.47879494306464626, 0.6953264891966098),
+ (0.48148480229534657, 0.6966097648322789),
+ (0.4816641262440599, 0.6967291393100156),
+ (0.4820526614662722, 0.6969678882654888),
+ (0.48390567560297676, 0.6984003819983288),
+ (0.48456319674825904, 0.6987585054315387),
+ (0.48593801368839473, 0.699892562970037),
+ (0.4877013658507427, 0.7011161513668378),
+ (0.4881197883977405, 0.7014742748000478),
+ (0.48829911234645385, 0.7015638056583502),
+ (0.48889685884216505, 0.7020114599498627),
+ (0.4891060701156639, 0.7023397397636385),
+ (0.489913027884874, 0.702966455771756),
+ (0.49125795750022416, 0.7038020771159126),
+ (0.49176604202157864, 0.7039811388325176),
+ (0.49314085896171433, 0.7045481676017668),
+ (0.4939478167309244, 0.7050555091321475),
+ (0.49454556322663557, 0.7054733198042259),
+ (0.49499387309841897, 0.7056523815208309),
+ (0.49508353507277564, 0.7058314432374359),
+ (0.495531844944559, 0.7061895666706458),
+ (0.4970859858334081, 0.7073534678285782),
+ (0.4976837323291192, 0.7083383072699057),
+ (0.49795271825218923, 0.708577056225379),
+ (0.49881945067097044, 0.708935179658589),
+ (0.4990286619444694, 0.7093828339501015),
+ (0.49950685914103826, 0.7096812701444432),
+ (0.499865507038465, 0.7101289244359555),
+ (0.500134492961535, 0.7104273606302972),
+ (0.5003437042350339, 0.7104870478691656),
+ (0.5011805493290296, 0.7110242330189805),
+ (0.5018978451238829, 0.7117106362659663),
+ (0.5053647747990078, 0.7143667183956071),
+ (0.5082040706536358, 0.7171123313835502),
+ (0.5084132819271348, 0.7172018622418527),
+ (0.5086224932006336, 0.7173212367195894),
+ (0.5090110284228458, 0.717619672913931),
+ (0.5094593382946292, 0.7177092037722335),
+ (0.5105651693116949, 0.7187537304524293),
+ (0.5122089721749006, 0.7204846603796108),
+ (0.5142711975851042, 0.7211710636265967),
+ (0.5148091694312442, 0.7214694998209383),
+ (0.5149287187303865, 0.7217679360152799),
+ (0.5153770286021698, 0.7219171541124507),
+ (0.5157954511491676, 0.7224244956428315),
+ (0.5166621835679488, 0.7233496478452907),
+ (0.5172898173884456, 0.7237077712785006),
+ (0.5176484652858723, 0.7240658947117107),
+ (0.5178576765593712, 0.724125581950579),
+ (0.5183358737559401, 0.7247821415781306),
+ (0.5204279864909293, 0.7262743225498388),
+ (0.5206073104396426, 0.7263638534081414),
+ (0.5210556203114259, 0.7265130715053122),
+ (0.5214142682088526, 0.7266324459830488),
+ (0.5223706626019905, 0.7270801002745613),
+ (0.5232672823455572, 0.7275575981855079),
+ (0.5270330852685376, 0.7297958696430703),
+ (0.5271825218924654, 0.7298854005013728),
+ (0.5281389162856033, 0.7305718037483586),
+ (0.5294838459009534, 0.7312283633759102),
+ (0.5299022684479512, 0.731556643189686),
+ (0.5310977614393736, 0.7323027336755402),
+ (0.5312173107385157, 0.7324221081532768),
+ (0.5319346065333692, 0.7330786677808284),
+ (0.5342658178666427, 0.7351080339023517),
+ (0.535192324934995, 0.7356452190521666),
+ (0.5353716488837085, 0.7359734988659424),
+ (0.536686691174273, 0.7371374000238748),
+ (0.5368361277982008, 0.7372567745016115),
+ (0.5371947756956275, 0.7375253670765191),
+ (0.5395259870289011, 0.7384505192789782),
+ (0.5397351983023999, 0.7386295809955832),
+ (0.5400639588750411, 0.7388981735704906),
+ (0.5403329447981111, 0.7390175480482273),
+ (0.5413790011656057, 0.7402112928255938),
+ (0.5414985504647479, 0.7404500417810672),
+ (0.5417974237126035, 0.7405694162588039),
+ (0.5427239307809558, 0.7415244120806972),
+ (0.5432320153023102, 0.741673630177868),
+ (0.5433515646014525, 0.741852691894473),
+ (0.5442481843450193, 0.7420615972305121),
+ (0.5449654801398727, 0.7428076877163663),
+ (0.5453540153620849, 0.7430464366718396),
+ (0.5473863534475029, 0.7439119016354303),
+ (0.5482530858662841, 0.7443595559269428),
+ (0.5490600436354942, 0.7448668974573236),
+ (0.5495980154816342, 0.745105646412797),
+ (0.5499267760542754, 0.7453742389877044),
+ (0.5509130577721988, 0.7461203294735586),
+ (0.5512717056696255, 0.7463889220484661),
+ (0.5522281000627633, 0.7468664199594127),
+ (0.5527062972593323, 0.7471946997731885),
+ (0.552795959233689, 0.7473439178703594),
+ (0.5550673959173914, 0.7494031276113167),
+ (0.5555455931139603, 0.7497314074250925),
+ (0.5557548043874593, 0.7499403127611317),
+ (0.5623599031650677, 0.7544765429151248),
+ (0.5636749454556322, 0.7553420078787155),
+ (0.5650796497205535, 0.7557299749313596),
+ (0.5654681849427657, 0.7561179419840038),
+ (0.5657969455154069, 0.7564163781783455),
+ (0.5659762694641203, 0.7564760654172138),
+ (0.5662153680624047, 0.7565954398949505),
+ (0.5664245793359036, 0.7569237197087263),
+ (0.5666636779341881, 0.7569834069475946),
+ (0.5677396216264682, 0.7585949623970395),
+ (0.5679488328999671, 0.7586546496359079),
+ (0.5684270300965361, 0.7589232422108153),
+ (0.5706088048058818, 0.759400740121762),
+ (0.5715054245494485, 0.7598185507938403),
+ (0.5720433963955887, 0.7602662050853527),
+ (0.5723123823186587, 0.7603855795630894),
+ (0.5725215935921576, 0.7605646412796944),
+ (0.572760692190442, 0.7607138593768652),
+ (0.5732986640365821, 0.7611018264295094),
+ (0.5746137063271467, 0.761400262623851),
+ (0.5749723542245734, 0.7616390115793243),
+ (0.5758390866433546, 0.7620568222514027),
+ (0.5762276218655669, 0.7621463531097051),
+ (0.576616157087779, 0.7623851020651785),
+ (0.5773633402074181, 0.7628327563566909),
+ (0.5778714247287725, 0.7632505670287693),
+ (0.581906213574823, 0.765369464008595),
+ (0.5851340446516632, 0.7674286737495524),
+ (0.5856122418482321, 0.7677569535633282),
+ (0.5886607489763591, 0.7691894472961681),
+ (0.6107175946681013, 0.7896920138474394),
+ (0.6116739890612392, 0.7902888862361227),
+ (0.6129591440270181, 0.7907663841470693),
+ (0.6172031441465674, 0.7931240300823684),
+ (0.6190561582832721, 0.7945565238152084),
+ (0.6195941301294121, 0.7948251163901158),
+ (0.6249140739412415, 0.798466037961084),
+ (0.6255715950865238, 0.7988241613942939),
+ (0.6267969754027317, 0.7995105646412797),
+ (0.6268268627275173, 0.7995105646412797),
+ (0.6268866373770884, 0.7996597827384505),
+ (0.6275441585223707, 0.8000775934105289),
+ (0.6291879613855764, 0.8008236838963829),
+ (0.6294868346334319, 0.8009729019935538),
+ (0.6301144684539287, 0.8013310254267637),
+ (0.6309214262231387, 0.8020472722931837),
+ (0.631309961445351, 0.8024053957263937),
+ (0.6328641023342001, 0.8029425808762086),
+ (0.6342688065991213, 0.8039871075564045),
+ (0.6362114827101826, 0.8053300704309418),
+ (0.6409037927015153, 0.8103437984958816),
+ (0.642278609641651, 0.8112987943177749),
+ (0.6424579335903643, 0.8115673868926824),
+ (0.6436235392570011, 0.812403008236839),
+ (0.6438626378552855, 0.8126716008117465),
+ (0.644579933650139, 0.8138355019696789),
+ (0.6448190322484234, 0.8139847200668497),
+ (0.6451477928210646, 0.8142831562611914),
+ (0.6457156519919902, 0.8146412796944014),
+ (0.646134074538988, 0.8150292467470455),
+ (0.6466421590603425, 0.8153276829413871),
+ (0.6471203562569114, 0.8155962755162947),
+ (0.6477778774021937, 0.8158947117106362),
+ (0.6493619056158283, 0.8168497075325295),
+ (0.6498699901371828, 0.8172376745851737),
+ (0.6588660748976359, 0.8235943655246508),
+ (0.6602408918377716, 0.8248776411603199),
+ (0.6603903284616994, 0.8249373283991882),
+ (0.6611375115813384, 0.825265608212964),
+ (0.662243342598404, 0.826160916795989),
+ (0.6626019904958307, 0.8264593529903307),
+ (0.6631399623419708, 0.8266384147069357),
+ (0.664544666606892, 0.8269666945207115),
+ (0.6649033145043187, 0.8272651307150531),
+ (0.6664574553931678, 0.8288169989256297),
+ (0.6667563286410233, 0.8289363734033663),
+ (0.6671448638632356, 0.8291154351199713),
+ (0.6673839624615201, 0.8292049659782739),
+ (0.6676828357093757, 0.8293840276948788),
+ (0.6689381033503691, 0.8299510564641279),
+ (0.6704623569144326, 0.8315029246747045),
+ (0.6718969485041394, 0.8322191715411245),
+ (0.6741086105382708, 0.8326966694520711),
+ (0.6747063570339819, 0.8331443237435836),
+ (0.6749454556322664, 0.8333233854601886),
+ (0.6761110612989031, 0.8344275993792527),
+ (0.6772467796407543, 0.8349647845290676),
+ (0.6785020472817478, 0.8354124388205801),
+ (0.6796676529483846, 0.8360689984481318),
+ (0.6857646672046385, 0.8406052286021248),
+ (0.6887235123584088, 0.8423660021487406),
+ (0.6889626109566933, 0.8424853766264773),
+ (0.6893810335036911, 0.8425152202459114),
+ (0.6905765264951135, 0.843171779873463),
+ (0.6911144983412535, 0.8437388086427122),
+ (0.6947906392898772, 0.8460964545780112),
+ (0.6951492871873038, 0.8463352035334846),
+ (0.6959263576317284, 0.8469022323027336),
+ (0.6962551182043695, 0.8470514503999045),
+ (0.6994231746316387, 0.8484839441327444),
+ (0.6999611464777787, 0.8486928494687835),
+ (0.7002301324008487, 0.8489017548048228),
+ (0.7011267521444156, 0.8499761251044526),
+ (0.7013658507427, 0.850035812343321),
+ (0.7020532592127678, 0.8502447176793602),
+ (0.7042350339221136, 0.8520054912259759),
+ (0.7048626677426103, 0.8520950220842783),
+ (0.7053109776143938, 0.8523337710397517),
+ (0.705699512836606, 0.8525426763757908),
+ (0.7076421889476673, 0.8533782977199474),
+ (0.709495203084372, 0.854213919064104),
+ (0.7120954003407155, 0.8549003223110899),
+ (0.7122149496398578, 0.8551390712665632),
+ (0.7125437102124988, 0.8557657872746807),
+ (0.7140380764517767, 0.8566312522382714),
+ (0.7161600765115514, 0.8585114002626238),
+ (0.7165784990585493, 0.8586009311209264),
+ (0.7178038793747572, 0.8590187417930046),
+ (0.7181625272721839, 0.8595260833233854),
+ (0.7232732598105144, 0.862152321833592),
+ (0.7252159359215756, 0.8629580995583145),
+ (0.7261125556651424, 0.8640921570968128),
+ (0.7267103021608535, 0.8645994986271935),
+ (0.7274873726052781, 0.8651366837770085),
+ (0.7277264712035626, 0.8651963710158768),
+ (0.7288323022206282, 0.8660319923600335),
+ (0.7296691473146238, 0.8663901157932434),
+ (0.7298783585881228, 0.8664796466515459),
+ (0.7303266684599061, 0.8665990211292826),
+ (0.7337637108102454, 0.8685388563925033),
+ (0.7341223587076721, 0.8685985436313716),
+ (0.7348396545025255, 0.868837292586845),
+ (0.7352281897247377, 0.8690163543034499),
+ (0.7363340207418034, 0.8694341649755283),
+ (0.7428494575450552, 0.8729855556881939),
+ (0.7430885561433396, 0.8730452429270622),
+ (0.7436564153142652, 0.8732839918825355),
+ (0.7440449505364775, 0.8734630535991404),
+ (0.7448519083056876, 0.8740300823683896),
+ (0.7457186407244688, 0.8743882058015996),
+ (0.7459876266475388, 0.8745971111376388),
+ (0.7471532323141755, 0.8751044526680196),
+ (0.7515765563824383, 0.8767756953563328),
+ (0.7520846409037927, 0.8771039751701086),
+ (0.7522938521772916, 0.8772233496478453),
+ (0.7536088944678562, 0.8775814730810553),
+ (0.7542664156131385, 0.8779694401336994),
+ (0.756597626946412, 0.8795511519637101),
+ (0.759377148151469, 0.8814611436074967),
+ (0.7658328103051496, 0.8839083204010982),
+ (0.7690307540572043, 0.8859973737614898),
+ (0.7771302190740906, 0.8905932911543512),
+ (0.7775785289458741, 0.8906231347737854),
+ (0.7856481066379748, 0.8980243523934582),
+ (0.7871723602020383, 0.8987405992598783),
+ (0.7908783884754476, 0.9017846484421631),
+ (0.7917750082190144, 0.9026501134057539),
+ (0.7935383603813623, 0.9032768294138713),
+ (0.7943453181505723, 0.9041721379968962),
+ (0.7975432619026271, 0.9068879073654053),
+ (0.7984398816461938, 0.9074549361346544),
+ (0.8001434591589707, 0.9089172734869285),
+ (0.8011596282016796, 0.9094843022561776),
+ (0.8016378253982486, 0.909723051211651),
+ (0.8022056845691742, 0.9100811746448609),
+ (0.8028632057144565, 0.9103199236003342),
+ (0.8038494874323799, 0.91064820341411),
+ (0.8074359664066469, 0.9118419481914767),
+ (0.8083923607997848, 0.9123492897218575),
+ (0.809528079141636, 0.9130356929688432),
+ (0.8106339101587017, 0.9138116270741315),
+ (0.811082220030485, 0.9140503760296048),
+ (0.8116799665261962, 0.9143488122239465),
+ (0.8121581637227652, 0.9149158409931957),
+ (0.8123673749962641, 0.9150053718514981),
+ (0.813323769389402, 0.9154231825235765),
+ (0.814399713081682, 0.9161692730094306),
+ (0.8151767835261066, 0.916616927300943),
+ (0.8153561074748199, 0.9166766145398114),
+ (0.8164021638423145, 0.9170347379730214),
+ (0.8197794315430825, 0.9183777008475588),
+ (0.8201380794405093, 0.9186761370419004),
+ (0.8221405302011418, 0.9204667542079503),
+ (0.8225290654233539, 0.920586128685687),
+ (0.8227382766968528, 0.920765190402292),
+ (0.8233957978421351, 0.9209740957383311),
+ (0.8242326429361307, 0.9211830010743703),
+ (0.8275202486625423, 0.9231825235764594),
+ ...]
+Command took 0.13 seconds -- by a user at 1/12/2022, 1:14:55 pm on unknown cluster
+Conclusion
+We have applied
+
+Different Machine learning Models
+Different paramter grid values
+And, evaluated the models with ROC
+Random Forrest model came out to be the best model for predicting the winning player in a tennis match.
+
+Area under the ROC curve for Random Forrest model is around 60%
