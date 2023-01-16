@@ -543,12 +543,12 @@ Displaying dataframe
 df = df.sample(frac=1).reset_index(drop=True)
 df
 
------------------------------------------------------------------------------------------------------------------
 # Creating spark dataframe
 
 df = spark.createDataFrame(df)
 type(df)
 df.printSchema()
+
 root
  |-- first_age: float (nullable = true)
  |-- first_hand: string (nullable = true)
@@ -566,7 +566,6 @@ root
  |-- second_rank_points: double (nullable = true)
  |-- label: double (nullable = true)
 
-Command took 0.36 seconds -- by a user at 1/12/2022, 1:14:55 pm on unknown cluster
 # Splitting the data into Train and Test
 
 train_data,test_data  = df.randomSplit([0.6, 0.4], 24)   # proportions [], seed for random
@@ -575,8 +574,11 @@ print("records in training data : " + str(train_data.count()))
 print("records in testing data : " + str(test_data.count()))
 records in training data : 100851
 records in testing data : 66967
-Command took 3.90 seconds -- by a user at 1/12/2022, 1:14:55 pm on unknown cluster
+
+
 Modeling & Tuning
+
+
 Deploying Random Forest, GBT Classifier and SVM models in pipeline Using Paramgrid and CrossValidation for data modeling and tuning
 
 from pyspark.ml.feature import VectorAssembler,RFormula
@@ -635,8 +637,10 @@ pg_lsvc = ParamGridBuilder()\
 # One grid from the individual grids
 paramGrid = pg_xgboost + pg_rf + pg_lsvc
 Formula : label ~ first_age + first_ht + first_id + first_rank + first_rank_points + second_age + second_ht + second_id + second_rank + second_rank_points
-Command took 0.54 seconds -- by a user at 1/12/2022, 1:14:55 pm on unknown cluster
+
+
 Fitting the Model
+
 from pyspark.ml.evaluation import  MulticlassClassificationEvaluator, BinaryClassificationEvaluator
 
 evaluator=BinaryClassificationEvaluator(rawPredictionCol="rawPrediction",labelCol="label")
@@ -648,10 +652,12 @@ cv = CrossValidator()\
       .setNumFolds(2)
 
 cvModel = cv.fit(train_data.limit(100))
-Command took 2.07 minutes -- by a user at 1/12/2022, 1:14:55 pm on unknown cluster
+
+
 Displaying the Best Model and its parameters
 bestmodel = cvModel.bestModel
-Command took 0.05 seconds -- by a user at 1/12/2022, 1:14:55 pm on unknown cluster
+
+
 Best and Worst Model
 import numpy as np
 # RegressionEvaluator metric name is r2, so higher is better
@@ -664,7 +670,8 @@ Best Model
 {Param(parent='Pipeline_bfff42c7e38a', name='stages', doc='a list of pipeline stages'): [RFormula_38c99cba9ddd, RandomForestClassifier_50afffe66a03], Param(parent='RandomForestClassifier_50afffe66a03', name='maxDepth', doc='Maximum depth of the tree. (>= 0) E.g., depth 0 means 1 leaf node; depth 1 means 1 internal node + 2 leaf nodes. Must be in range [0, 30].'): 4}
 Worst Model
 {Param(parent='GBTClassifier_46e17f5b69e6', name='maxDepth', doc='Maximum depth of the tree. (>= 0) E.g., depth 0 means 1 leaf node; depth 1 means 1 internal node + 2 leaf nodes. Must be in range [0, 30].'): 5, Param(parent='Pipeline_bfff42c7e38a', name='stages', doc='a list of pipeline stages'): [RFormula_38c99cba9ddd, GBTClassifier_46e17f5b69e6]}
-Command took 0.04 seconds -- by a user at 1/12/2022, 1:14:55 pm on unknown cluster
+
+
 Model Measures
 import re
 def paramGrid_model_name(model):
@@ -675,269 +682,16 @@ def paramGrid_model_name(model):
 
 measures = zip(cvModel.avgMetrics, [paramGrid_model_name(m) for m in paramGrid])
 metrics,model_names = zip(*measures)
-Command took 0.04 seconds -- by a user at 1/12/2022, 1:14:55 pm on unknown cluster
+
+
 Prediction and Evaluation
+
 Prediction using test data
+
 predictions = bestmodel.transform(test_data)
 display(predictions)
 predictions.select("prediction", "label").show(5)
-Table
- 
-first_age
-first_hand
-first_ht
-first_id
-first_ioc
-first_rank
-first_rank_points
-second_age
-second_hand
-second_ht
-second_id
-second_ioc
-second_rank
-1
-2
-3
-4
-5
-6
-7
-8
-9
-10
-11
-12
-13
-14
-15
-16
-17
-16.53
-R
-185
-104755
-FRA
-161
-225
-24.36
-R
-175
-103252
-ESP
-61
-16.65
-R
-185
-104755
-FRA
-139
-272
-21.39
-L
-188
-103852
-ESP
-49
-16.87
-R
-190
-105208
-LAT
-1086
-5
-18.79
-R
-183
-104813
-SLO
-395
-16.88
-R
-183
-102536
-NZL
-1059
-3
-24.51
-R
-185
-101368
-ARG
-82
-16.9
-R
-180
-103720
-AUS
-162
-281
-26.8
-R
-190
-101888
-CZE
-54
-17.05
-R
-185
-102375
-ROU
-240
-90
-20.84
-R
-188
-101767
-SWE
-102
-17.07
-R
-185
-103009
-ROU
-783
-12
-23.95
-R
-183
-101783
-GBR
-88
-17.11
-L
-185
-104745
-ESP
-56
-667
-19.3
-R
-185
-104332
-GER
-317
-17.11
-L
-185
-104745
-ESP
-56
-667
-22.96
-R
-183
-103602
-CHI
-14
-17.19
-R
-196
-102882
-AUS
-439
-53
-22.64
-R
-188
-101917
-RSA
-69
-17.34
-R
-198
-105227
-CRO
-585
-35
-21.94
-R
-190
-104312
-ITA
-55
-17.36
-R
-180
-103857
-RUS
-431
-66
-32.1
-R
-185
-101320
-SWE
-33
-17.4
-R
-193
-103344
-CRO
-969
-6
-28.01
-R
-178
-101507
-ESP
-61
-17.41
-R
-178
-102148
-FRA
-98
-286
-22.29
-L
-190
-101434
-CZE
-24
-17.52
-R
-185
-103819
-SUI
-178
-262
-23.98
-R
-188
-102539
-CZE
-30
-17.77
-R
-196
-102882
-AUS
-410
-64
-25.15
-R
-180
-101613
-USA
-33
-17.84
-R
-183
-105992
-USA
-284
-158
-28.88
-R
-188
-103758
-USA
-77
-Truncated results, showing first 1,000 rows.
-|
-1.60 seconds runtime
-Refreshed 46 days ago
+
 +----------+-----+
 |prediction|label|
 +----------+-----+
@@ -947,12 +701,11 @@ Refreshed 46 days ago
 |       0.0|  0.0|
 |       0.0|  0.0|
 +----------+-----+
-only showing top 5 rows
 
-Command took 1.60 seconds -- by a user at 1/12/2022, 1:14:55 pm on unknown cluster
 from pyspark.ml.evaluation import BinaryClassificationEvaluator
 evaluator=BinaryClassificationEvaluator(rawPredictionCol="rawPrediction",labelCol="label")
 predictions.select("label","rawPrediction","prediction","probability").show(5)
+
 +-----+--------------------+----------+--------------------+
 |label|       rawPrediction|prediction|         probability|
 +-----+--------------------+----------+--------------------+
@@ -964,8 +717,8 @@ predictions.select("label","rawPrediction","prediction","probability").show(5)
 +-----+--------------------+----------+--------------------+
 only showing top 5 rows
 
-Command took 0.70 seconds -- by a user at 1/12/2022, 1:14:55 pm on unknown cluster
 Confusion matrix
+
 from pyspark.mllib.evaluation import MulticlassMetrics
 preds_and_labels = predictions.select(['prediction','label'])
 metrics = MulticlassMetrics(preds_and_labels.rdd.map(tuple))
@@ -974,8 +727,10 @@ print(metrics.confusionMatrix().toArray())
   warnings.warn(
 [[28072.  5387.]
  [23186. 10322.]]
-Command took 6.59 seconds -- by a user at 1/12/2022, 1:14:55 pm on unknown cluster
+
+
 Plot confusion matrix
+
 cnf_matrix = pd.DataFrame(metrics.confusionMatrix().toArray())
 
 class_names=[0,1] # name  of classes
@@ -994,7 +749,6 @@ plt.xlabel('Predicted label')
 
 display(plt.show())
 
-Command took 0.53 seconds -- by a user at 1/12/2022, 1:14:55 pm on unknown cluster
 Evaluate the best model with ROC
 from pyspark.mllib.evaluation import BinaryClassificationMetrics
 
@@ -1006,7 +760,8 @@ print("Area under PR = %s" % bin_metrics.areaUnderPR)
 print("Area under ROC = %s" % bin_metrics.areaUnderROC)
 Area under PR = 0.6028575939106391
 Area under ROC = 0.5735214105898238
-Command took 4.46 seconds -- by a user at 1/12/2022, 1:14:55 pm on unknown cluster
+
+
 from pyspark.mllib.evaluation import BinaryClassificationMetrics
 
 class CurveMetrics(BinaryClassificationMetrics):
@@ -1022,7 +777,8 @@ class CurveMetrics(BinaryClassificationMetrics):
     def get_curve(self, method):
         rdd = getattr(self._java_model, method)().toJavaRDD()
         return self._to_list(rdd)
-Command took 0.04 seconds -- by a user at 1/12/2022, 1:14:55 pm on unknown cluster
+
+
 Plot ROC curve
 import matplotlib.pyplot as plt
 
@@ -1038,7 +794,7 @@ plt.ylabel("True positive rate")
 plt.plot(x_val, y_val)
 display(plt.show())
 
-Command took 10.49 seconds -- by a user at 1/12/2022, 1:14:55 pm on unknown cluster
+
 points
 Out[39]: [(0.0, 0.0),
  (0.0004781971965689351, 0.001372806493971589),
@@ -2041,8 +1797,10 @@ Out[39]: [(0.0, 0.0),
  (0.8242326429361307, 0.9211830010743703),
  (0.8275202486625423, 0.9231825235764594),
  ...]
-Command took 0.13 seconds -- by a user at 1/12/2022, 1:14:55 pm on unknown cluster
+
+
 Conclusion
+
 We have applied
 
 Different Machine learning Models
