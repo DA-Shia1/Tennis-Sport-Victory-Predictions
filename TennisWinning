@@ -1,8 +1,6 @@
 Project Name: Tennis Sport Victory Prediction
 This is a project I build as part of my final Big Data Infrastructure course with 3 of my colleagues. This project predicts the game results.
 
-Shiwani Yadav
-
 
 Tennis Sport Victory Prediction
 Data Source : Kaggle
@@ -1809,3 +1807,7 @@ And, evaluated the models with ROC
 Random Forrest model came out to be the best model for predicting the winning player in a tennis match.
 
 Area under the ROC curve for Random Forrest model is around 60%
+
+
+
+Took reference from google and other resources.
